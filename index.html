@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instrumentation & Control Engineering Calculator Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #070b10;
+    --bg-panel: #0d1520;
+    --bg-card: #111c2d;
+    --bg-input: #0a1118;
+    --border: #1e3050;
+    --border-active: #2a4a7a;
+    --accent: #e8a020;
+    --accent2: #3b9eff;
+    --accent3: #28d9a0;
+    --accent-warn: #ff6b35;
+    --accent-err: #e83030;
+    --accent-ok: #28d9a0;
+    --text-primary: #d8e8f8;
+    --text-secondary: #6a8aaa;
+    --text-muted: #3a5070;
+    --text-value: #e8a020;
+    --text-formula: #a8d8ff;
+    --mono: 'Share Tech Mono', monospace;
+    --sans: 'Barlow', sans-serif;
+    --cond: 'Barlow Condensed', sans-serif;
+    --shadow: 0 4px 24px rgba(0,0,0,0.6);
+    --glow-accent: 0 0 20px rgba(232,160,32,0.2);
+    --glow-blue: 0 0 20px rgba(59,158,255,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #070b10 0%, #0d1a2e 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 0;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 30px rgba(232,160,32,0.15);
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px 8px;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 13px; color: #070b10; font-weight: bold;
+    animation: pulse-logo 3s infinite;
+  }
+  @keyframes pulse-logo {
+    0%,100% { box-shadow: 0 0 0px var(--accent); }
+    50% { box-shadow: 0 0 20px rgba(232,160,32,0.6); }
+  }
+  .header-title { font-family: var(--cond); font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+  .header-subtitle { font-family: var(--mono); font-size: 10px; color: var(--text-secondary); letter-spacing: 2px; }
+  .header-badge {
+    font-family: var(--mono); font-size: 9px; color: var(--accent);
+    border: 1px solid var(--accent); padding: 3px 10px; letter-spacing: 2px;
+    background: rgba(232,160,32,0.05);
+  }
+  .header-standards {
+    display: flex; gap: 8px; padding: 6px 24px 10px; flex-wrap: wrap;
+  }
+  .std-badge {
+    font-family: var(--mono); font-size: 9px; color: var(--text-secondary);
+    background: rgba(59,158,255,0.05); border: 1px solid rgba(59,158,255,0.2);
+    padding: 2px 8px; border-radius: 2px; letter-spacing: 1px;
+  }
+
+  /* TABS */
+  .tab-bar {
+    display: flex; gap: 2px; padding: 0 20px; overflow-x: auto;
+    background: #09111c; border-bottom: 1px solid var(--border);
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .tab-btn {
+    font-family: var(--cond); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.5px; padding: 10px 16px; white-space: nowrap;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--text-muted); border-bottom: 3px solid transparent;
+    transition: all 0.2s; position: relative; top: 1px;
+  }
+  .tab-btn:hover { color: var(--text-secondary); border-bottom-color: var(--border-active); }
+  .tab-btn.active {
+    color: var(--accent); border-bottom-color: var(--accent);
+    background: linear-gradient(0deg, rgba(232,160,32,0.05) 0%, transparent 100%);
+  }
+  .tab-number { font-family: var(--mono); font-size: 9px; color: var(--accent); margin-right: 4px; }
+
+  /* MAIN LAYOUT */
+  main { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+  .calc-panel { display: none; }
+  .calc-panel.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* CALC HEADER */
+  .calc-header {
+    background: linear-gradient(135deg, #0d1a2e, #0a1320);
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    padding: 20px 24px; margin-bottom: 20px;
+  }
+  .calc-title { font-family: var(--cond); font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .calc-purpose { font-size: 13px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5; }
+  .calc-standards { display: flex; gap: 8px; flex-wrap: wrap; }
+  .calc-std-tag {
+    font-family: var(--mono); font-size: 10px; color: var(--accent2);
+    background: rgba(59,158,255,0.08); border: 1px solid rgba(59,158,255,0.25);
+    padding: 2px 10px; letter-spacing: 1px;
+  }
+
+  /* GRID LAYOUT */
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .calc-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .span-2 { grid-column: span 2; }
+  .span-3 { grid-column: span 3; }
+  @media (max-width: 900px) {
+    .calc-grid, .calc-grid-3 { grid-template-columns: 1fr; }
+    .span-2, .span-3 { grid-column: span 1; }
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 18px; border-radius: 1px;
+  }
+  .card-title {
+    font-family: var(--cond); font-size: 13px; font-weight: 600;
+    letter-spacing: 1.5px; color: var(--accent); text-transform: uppercase;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before {
+    content: ''; width: 8px; height: 8px; background: var(--accent);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+
+  /* LEGEND TABLE */
+  .legend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .legend-table th {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+    color: var(--text-secondary); background: var(--bg-input);
+    padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  .legend-table td {
+    padding: 6px 10px; border-bottom: 1px solid rgba(30,48,80,0.5);
+    vertical-align: top;
+  }
+  .legend-table tr:hover td { background: rgba(59,158,255,0.03); }
+  .sym { font-family: var(--mono); color: var(--accent); font-weight: bold; font-size: 13px; }
+  .unit { font-family: var(--mono); color: var(--accent3); font-size: 11px; }
+  .desc { color: var(--text-secondary); font-size: 11px; line-height: 1.4; }
+
+  /* FORMULA BLOCK */
+  .formula-block {
+    background: var(--bg-input); border: 1px solid rgba(168,216,255,0.15);
+    border-left: 3px solid var(--accent2); padding: 14px 16px;
+    margin: 10px 0; font-family: var(--mono); font-size: 13px;
+    color: var(--text-formula); line-height: 1.8;
+  }
+  .formula-comment { color: var(--text-muted); font-size: 11px; }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 12px; }
+  .input-label {
+    font-family: var(--cond); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;
+    display: flex; justify-content: space-between;
+  }
+  .input-label .sym-inline { font-family: var(--mono); color: var(--accent); font-size: 12px; }
+  .input-wrap { display: flex; gap: 0; }
+  input[type="number"], select {
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text-primary); font-family: var(--mono); font-size: 13px;
+    padding: 8px 12px; width: 100%; outline: none;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input:focus, select:focus { border-color: var(--accent2); background: #0c1520; }
+  .unit-tag {
+    background: rgba(59,158,255,0.1); border: 1px solid rgba(59,158,255,0.2);
+    border-left: none; color: var(--accent2); font-family: var(--mono);
+    font-size: 10px; padding: 8px 10px; white-space: nowrap; min-width: 60px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* BUTTONS */
+  .calc-btn {
+    background: linear-gradient(135deg, #c87a10, #e8a020);
+    border: none; color: #070b10;
+    font-family: var(--cond); font-size: 14px; font-weight: 700;
+    letter-spacing: 1px; padding: 12px 28px; cursor: pointer;
+    text-transform: uppercase; transition: all 0.2s;
+    width: 100%; margin-top: 8px;
+  }
+  .calc-btn:hover { background: linear-gradient(135deg, #e8a020, #f5b840); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,160,32,0.3); }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* RESULTS */
+  .result-block {
+    background: linear-gradient(135deg, #0a1a10, #0d1a0d);
+    border: 1px solid rgba(40,217,160,0.2); border-left: 4px solid var(--accent3);
+    padding: 16px; margin-top: 8px; display: none;
+  }
+  .result-block.visible { display: block; animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 7px 0; border-bottom: 1px solid rgba(40,217,160,0.08);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { font-family: var(--cond); font-size: 12px; color: var(--text-secondary); }
+  .result-value { font-family: var(--mono); font-size: 15px; color: var(--accent3); font-weight: bold; }
+  .result-unit { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); margin-left: 4px; }
+
+  /* STEP-BY-STEP */
+  .step-block { margin-bottom: 10px; }
+  .step-num {
+    font-family: var(--mono); font-size: 10px; color: var(--accent);
+    background: rgba(232,160,32,0.1); border: 1px solid rgba(232,160,32,0.2);
+    padding: 2px 8px; display: inline-block; margin-bottom: 4px;
+  }
+  .step-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+  .step-formula { font-family: var(--mono); font-size: 12px; color: var(--text-formula); }
+
+  /* VALIDATION */
+  .validation-box {
+    margin-top: 8px; padding: 10px 14px;
+    border: 1px solid; font-size: 12px; font-family: var(--mono);
+  }
+  .val-ok { border-color: var(--accent-ok); background: rgba(40,217,160,0.05); color: var(--accent-ok); }
+  .val-warn { border-color: var(--accent-warn); background: rgba(255,107,53,0.05); color: var(--accent-warn); }
+  .val-err { border-color: var(--accent-err); background: rgba(232,48,48,0.05); color: var(--accent-err); }
+  .val-icon { margin-right: 6px; }
+
+  /* EXCEL */
+  .excel-block {
+    background: #0a1510; border: 1px solid rgba(40,160,80,0.2);
+    padding: 12px 14px; margin-top: 8px; font-family: var(--mono); font-size: 11px;
+    color: #80c080; line-height: 1.8;
+  }
+  .excel-label { color: var(--text-muted); margin-right: 8px; }
+
+  /* ASSUMPTIONS */
+  .assumption-list { list-style: none; padding: 0; }
+  .assumption-list li {
+    font-size: 12px; color: var(--text-secondary); padding: 4px 0 4px 16px;
+    position: relative; line-height: 1.5;
+  }
+  .assumption-list li::before {
+    content: '▸'; color: var(--accent2); position: absolute; left: 0;
+  }
+
+  /* WARN NOTES */
+  .warn-note {
+    background: rgba(255,107,53,0.07); border: 1px solid rgba(255,107,53,0.2);
+    border-left: 3px solid var(--accent-warn); padding: 10px 14px; margin-top: 10px;
+    font-size: 11px; color: var(--accent-warn); font-family: var(--mono);
+  }
+
+  /* SELECT STYLING */
+  select { appearance: none; cursor: pointer; }
+
+  .section-divider {
+    height: 1px; background: linear-gradient(90deg, var(--accent), transparent);
+    margin: 16px 0; opacity: 0.4;
+  }
+
+  /* MODE SWITCH */
+  .mode-switch {
+    display: flex; gap: 2px; margin-bottom: 14px;
+  }
+  .mode-btn {
+    font-family: var(--mono); font-size: 11px; padding: 6px 14px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: rgba(232,160,32,0.1); border-color: var(--accent); color: var(--accent);
+  }
+
+  .footer-note {
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+    text-align: center; padding: 20px; border-top: 1px solid var(--border); margin-top: 24px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="header-logo">
+      <div class="logo-icon">I&amp;C</div>
+      <div>
+        <div class="header-title">INSTRUMENTATION &amp; CONTROL ENGINEERING CALCULATORS</div>
+        <div class="header-subtitle">EPC / FEED-LEVEL DESIGN TOOLS — TIER 1 SUITE</div>
+      </div>
+    </div>
+    <div class="header-badge">REV A — 2025</div>
+  </div>
+  <div class="header-standards">
+    <span class="std-badge">ISA S75 / ISA-84</span>
+    <span class="std-badge">IEC 60534 / IEC 61511</span>
+    <span class="std-badge">API 520 / API 521</span>
+    <span class="std-badge">ISO 5167</span>
+    <span class="std-badge">ASME PTC 19.3 TW</span>
+    <span class="std-badge">IEC 60364</span>
+    <span class="std-badge">IEEE 835</span>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('cv')"><span class="tab-number">01</span>CONTROL VALVE</button>
+  <button class="tab-btn" onclick="showTab('psv')"><span class="tab-number">02</span>PSV SIZING</button>
+  <button class="tab-btn" onclick="showTab('orifice')"><span class="tab-number">03</span>ORIFICE FLOW</button>
+  <button class="tab-btn" onclick="showTab('dp')"><span class="tab-number">04</span>DP LEVEL</button>
+  <button class="tab-btn" onclick="showTab('cable')"><span class="tab-number">05</span>CABLE SIZING</button>
+  <button class="tab-btn" onclick="showTab('sil')"><span class="tab-number">06</span>SIL / PFD</button>
+  <button class="tab-btn" onclick="showTab('tw')"><span class="tab-number">07</span>THERMOWELL</button>
+  <button class="tab-btn" onclick="showTab('heat')"><span class="tab-number">08</span>HEAT DISSIPATION</button>
+</div>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 1: CONTROL VALVE SIZING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel active" id="panel-cv">
+  <div class="calc-header">
+    <div class="calc-title">CONTROL VALVE SIZING — Liquid &amp; Gas / Vapor</div>
+    <div class="calc-purpose">Calculates the valve flow coefficient (Cv) required for a given service condition. Includes choked flow detection, cavitation index check, and valve authority verification per ISA S75.01 and IEC 60534-2-1.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">ISA S75.01</span>
+      <span class="calc-std-tag">IEC 60534-2-1</span>
+      <span class="calc-std-tag">IEC 60534-2-3</span>
+    </div>
+  </div>
+
+  <div class="calc-grid">
+    <!-- Legend -->
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit (SI)</th><th>Description</th></tr>
+        <tr><td class="sym">Cv</td><td class="unit">gpm/(psi)^0.5</td><td class="desc">Valve flow coefficient — volumetric flow of water at 60°F with 1 psi drop</td></tr>
+        <tr><td class="sym">Q</td><td class="unit">m³/h</td><td class="desc">Volumetric flow rate through valve</td></tr>
+        <tr><td class="sym">ΔP</td><td class="unit">bar</td><td class="desc">Differential pressure across valve (P1 − P2)</td></tr>
+        <tr><td class="sym">ρ</td><td class="unit">kg/m³</td><td class="desc">Fluid density at flowing conditions</td></tr>
+        <tr><td class="sym">P1</td><td class="unit">bara</td><td class="desc">Upstream absolute pressure</td></tr>
+        <tr><td class="sym">P2</td><td class="unit">bara</td><td class="desc">Downstream absolute pressure</td></tr>
+        <tr><td class="sym">Pv</td><td class="unit">bara</td><td class="desc">Vapor pressure of liquid at flowing temperature</td></tr>
+        <tr><td class="sym">Pc</td><td class="unit">bara</td><td class="desc">Thermodynamic critical pressure of fluid</td></tr>
+        <tr><td class="sym">FL</td><td class="unit">—</td><td class="desc">Liquid pressure recovery factor (valve-specific, typically 0.70–0.96)</td></tr>
+        <tr><td class="sym">FP</td><td class="unit">—</td><td class="desc">Piping geometry factor (= 1.0 if no reducers)</td></tr>
+        <tr><td class="sym">xT</td><td class="unit">—</td><td class="desc">Pressure differential ratio factor for gas (valve-specific, typically 0.55–0.75)</td></tr>
+        <tr><td class="sym">Z</td><td class="unit">—</td><td class="desc">Gas compressibility factor</td></tr>
+        <tr><td class="sym">T</td><td class="unit">K</td><td class="desc">Absolute temperature of gas at inlet</td></tr>
+        <tr><td class="sym">MW</td><td class="unit">g/mol</td><td class="desc">Molecular weight of gas</td></tr>
+        <tr><td class="sym">γ</td><td class="unit">—</td><td class="desc">Specific heat ratio Cp/Cv (isentropic exponent)</td></tr>
+        <tr><td class="sym">Ff</td><td class="unit">—</td><td class="desc">Liquid critical pressure ratio factor = 0.96 − 0.28√(Pv/Pc)</td></tr>
+        <tr><td class="sym">Kc</td><td class="unit">—</td><td class="desc">Cavitation index = ΔP / (P1 − Pv)</td></tr>
+      </table>
+    </div>
+
+    <!-- Mode Selection + Inputs Left -->
+    <div class="card">
+      <div class="card-title">Service Mode &amp; Input Parameters</div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="cv-liq-btn" onclick="setCvMode('liquid')">LIQUID</button>
+        <button class="mode-btn" id="cv-gas-btn" onclick="setCvMode('gas')">GAS / VAPOR</button>
+      </div>
+
+      <!-- LIQUID INPUTS -->
+      <div id="cv-liquid-inputs">
+        <div class="input-group">
+          <div class="input-label"><span>Volumetric Flow Rate</span><span class="sym-inline">Q</span></div>
+          <div class="input-wrap"><input type="number" id="cv-Q" value="50" step="0.1"><div class="unit-tag">m³/h</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Inlet Pressure (abs)</span><span class="sym-inline">P1</span></div>
+          <div class="input-wrap"><input type="number" id="cv-P1" value="10" step="0.1"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Outlet Pressure (abs)</span><span class="sym-inline">P2</span></div>
+          <div class="input-wrap"><input type="number" id="cv-P2" value="8" step="0.1"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Fluid Density</span><span class="sym-inline">ρ</span></div>
+          <div class="input-wrap"><input type="number" id="cv-rho" value="900" step="1"><div class="unit-tag">kg/m³</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Vapor Pressure</span><span class="sym-inline">Pv</span></div>
+          <div class="input-wrap"><input type="number" id="cv-Pv" value="0.05" step="0.001"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Critical Pressure</span><span class="sym-inline">Pc</span></div>
+          <div class="input-wrap"><input type="number" id="cv-Pc" value="48.3" step="0.1"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Pressure Recovery Factor</span><span class="sym-inline">FL</span></div>
+          <div class="input-wrap"><input type="number" id="cv-FL" value="0.85" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Piping Geometry Factor</span><span class="sym-inline">FP</span></div>
+          <div class="input-wrap"><input type="number" id="cv-FP" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+      </div>
+
+      <!-- GAS INPUTS -->
+      <div id="cv-gas-inputs" style="display:none">
+        <div class="input-group">
+          <div class="input-label"><span>Mass Flow Rate</span><span class="sym-inline">W</span></div>
+          <div class="input-wrap"><input type="number" id="cv-W" value="1000" step="1"><div class="unit-tag">kg/h</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Inlet Pressure (abs)</span><span class="sym-inline">P1</span></div>
+          <div class="input-wrap"><input type="number" id="cv-P1g" value="20" step="0.1"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Outlet Pressure (abs)</span><span class="sym-inline">P2</span></div>
+          <div class="input-wrap"><input type="number" id="cv-P2g" value="10" step="0.1"><div class="unit-tag">bara</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Inlet Temperature</span><span class="sym-inline">T</span></div>
+          <div class="input-wrap"><input type="number" id="cv-T" value="293" step="1"><div class="unit-tag">K</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Molecular Weight</span><span class="sym-inline">MW</span></div>
+          <div class="input-wrap"><input type="number" id="cv-MW" value="29" step="0.1"><div class="unit-tag">g/mol</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Compressibility Factor</span><span class="sym-inline">Z</span></div>
+          <div class="input-wrap"><input type="number" id="cv-Z" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Specific Heat Ratio</span><span class="sym-inline">γ</span></div>
+          <div class="input-wrap"><input type="number" id="cv-gamma" value="1.4" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>DP Ratio Factor</span><span class="sym-inline">xT</span></div>
+          <div class="input-wrap"><input type="number" id="cv-xT" value="0.65" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcCV()">CALCULATE Cv</button>
+    </div>
+
+    <!-- Formulas + Results Right -->
+    <div class="card">
+      <div class="card-title">Governing Formulas</div>
+      <div id="cv-formula-liquid">
+        <div class="formula-block">
+          <span class="formula-comment">// IEC 60534 — Liquid, non-choked</span><br>
+          Cv = Q × (1/FP) × √(ρ/ρw / ΔP_eff)<br><br>
+          <span class="formula-comment">// SI conversion constant: N1 = 0.0865</span><br>
+          Cv = Q / (N1 × FP) × √(ρ / (ρw × ΔP_eff))<br><br>
+          <span class="formula-comment">// Choked pressure drop limit:</span><br>
+          ΔP_max = (FL × FP)² × (P1 − Ff × Pv)<br><br>
+          <span class="formula-comment">// Liquid critical pressure ratio:</span><br>
+          Ff = 0.96 − 0.28 × √(Pv / Pc)<br><br>
+          <span class="formula-comment">// Cavitation index:</span><br>
+          Kc = ΔP / (P1 − Pv) ; if Kc > FL² → cavitation
+        </div>
+      </div>
+      <div id="cv-formula-gas" style="display:none">
+        <div class="formula-block">
+          <span class="formula-comment">// IEC 60534 — Gas/Vapor (N9 = 94.8 SI)</span><br>
+          x = (P1 − P2) / P1 <span class="formula-comment">// pressure ratio</span><br>
+          xchoked = γ/1.4 × xT <span class="formula-comment">// choked limit</span><br>
+          if x > xchoked: use x = xchoked<br><br>
+          Y = 1 − x / (3 × γ/1.4 × xT) <span class="formula-comment">// expansion factor</span><br><br>
+          Cv = W / (N9 × P1 × Y) × √(T × Z / (x × MW))
+        </div>
+      </div>
+
+      <div id="cv-result" class="result-block">
+        <div class="result-row"><span class="result-label">Required Cv</span><span><span class="result-value" id="cv-res-cv">—</span><span class="result-unit"></span></span></div>
+        <div class="result-row"><span class="result-label">Effective ΔP Used</span><span><span class="result-value" id="cv-res-dp">—</span><span class="result-unit">bar</span></span></div>
+        <div class="result-row"><span class="result-label">Choked ΔP Limit</span><span><span class="result-value" id="cv-res-dpm">—</span><span class="result-unit">bar</span></span></div>
+        <div class="result-row"><span class="result-label">Ff (Critical Press. Ratio)</span><span><span class="result-value" id="cv-res-Ff">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row" id="cv-row-Kc"><span class="result-label">Cavitation Index Kc</span><span><span class="result-value" id="cv-res-Kc">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row" id="cv-row-Y" style="display:none"><span class="result-label">Expansion Factor Y</span><span><span class="result-value" id="cv-res-Y">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row" id="cv-row-x" style="display:none"><span class="result-label">Pressure Ratio x used</span><span><span class="result-value" id="cv-res-x">—</span><span class="result-unit">—</span></span></div>
+        <div id="cv-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="card-title">Excel Formula Equivalent</div>
+      <div id="cv-excel-liquid" class="excel-block">
+        <span class="excel-label">ΔP_eff:</span>=MIN(B3-B4, (B7*B8)^2*(B3-Ff*B5))<br>
+        <span class="excel-label">Ff:</span>=0.96-0.28*SQRT(B5/B6)<br>
+        <span class="excel-label">Cv:</span>=B1/(0.0865*B8)*SQRT(B2/(1000*ΔP_eff))<br>
+        <span class="excel-label">Kc:</span>=(B3-B4)/(B3-B5)  <span style="color:#3a5070">// warn if > FL²</span>
+      </div>
+      <div id="cv-excel-gas" class="excel-block" style="display:none">
+        <span class="excel-label">x:</span>=(P1-P2)/P1<br>
+        <span class="excel-label">xT_eff:</span>=gamma/1.4*xT<br>
+        <span class="excel-label">x_used:</span>=MIN(x, xT_eff)<br>
+        <span class="excel-label">Y:</span>=1-x_used/(3*gamma/1.4*xT)<br>
+        <span class="excel-label">Cv:</span>=W/(94.8*P1*Y)*SQRT(T*Z/(x_used*MW))
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 2: PSV SIZING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-psv">
+  <div class="calc-header">
+    <div class="calc-title">PRESSURE SAFETY VALVE (PSV) SIZING</div>
+    <div class="calc-purpose">Determines the minimum required orifice area for pressure relief devices under gas/vapor and liquid relief scenarios. Includes back-pressure correction factors Kb and Kc per API 520 Part 1 methodology.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">API 520 PART I</span>
+      <span class="calc-std-tag">API 521</span>
+      <span class="calc-std-tag">API 526</span>
+    </div>
+  </div>
+
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit (SI)</th><th>Description</th></tr>
+        <tr><td class="sym">A</td><td class="unit">mm²</td><td class="desc">Minimum required orifice area of PSV</td></tr>
+        <tr><td class="sym">W</td><td class="unit">kg/h</td><td class="desc">Required mass relief rate</td></tr>
+        <tr><td class="sym">Kd</td><td class="unit">—</td><td class="desc">Effective coefficient of discharge (gas≈0.975 conventional, liquid≈0.65)</td></tr>
+        <tr><td class="sym">Kb</td><td class="unit">—</td><td class="desc">Back-pressure correction factor (conventional PSV, use Fig. API 520)</td></tr>
+        <tr><td class="sym">Kc</td><td class="unit">—</td><td class="desc">Combination factor (= 0.9 if rupture disk upstream, else = 1.0)</td></tr>
+        <tr><td class="sym">Kw</td><td class="unit">—</td><td class="desc">Back-pressure correction for liquid service (balanced bellows)</td></tr>
+        <tr><td class="sym">Pset</td><td class="unit">barg</td><td class="desc">Set pressure of PSV</td></tr>
+        <tr><td class="sym">Pback</td><td class="unit">barg</td><td class="desc">Back pressure (superimposed + built-up)</td></tr>
+        <tr><td class="sym">P1</td><td class="unit">bara</td><td class="desc">Relieving pressure = Pset × 1.10 + 1.01325 (10% overpressure)</td></tr>
+        <tr><td class="sym">T</td><td class="unit">K</td><td class="desc">Relieving temperature (absolute)</td></tr>
+        <tr><td class="sym">MW</td><td class="unit">g/mol</td><td class="desc">Molecular weight of gas/vapor</td></tr>
+        <tr><td class="sym">Z</td><td class="unit">—</td><td class="desc">Compressibility factor at relieving conditions</td></tr>
+        <tr><td class="sym">C</td><td class="unit">—</td><td class="desc">Gas constant based on ratio of specific heats, C = 520√[γ(2/(γ+1))^((γ+1)/(γ−1))]</td></tr>
+        <tr><td class="sym">γ</td><td class="unit">—</td><td class="desc">Specific heat ratio Cp/Cv</td></tr>
+        <tr><td class="sym">SG</td><td class="unit">—</td><td class="desc">Specific gravity of liquid (relative to water at 15°C)</td></tr>
+        <tr><td class="sym">Kv</td><td class="unit">—</td><td class="desc">Viscosity correction factor (usually ≥ 1.0, iterate from Re)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Service Mode &amp; Input Parameters</div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="psv-gas-btn" onclick="setPsvMode('gas')">GAS / VAPOR</button>
+        <button class="mode-btn" id="psv-liq-btn" onclick="setPsvMode('liquid')">LIQUID</button>
+      </div>
+
+      <div id="psv-gas-inputs">
+        <div class="input-group">
+          <div class="input-label"><span>Required Relief Rate</span><span class="sym-inline">W</span></div>
+          <div class="input-wrap"><input type="number" id="psv-W" value="5000" step="10"><div class="unit-tag">kg/h</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Set Pressure</span><span class="sym-inline">Pset</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Pset" value="10" step="0.1"><div class="unit-tag">barg</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Back Pressure</span><span class="sym-inline">Pback</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Pback" value="1.5" step="0.1"><div class="unit-tag">barg</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Relieving Temperature</span><span class="sym-inline">T</span></div>
+          <div class="input-wrap"><input type="number" id="psv-T" value="400" step="1"><div class="unit-tag">K</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Molecular Weight</span><span class="sym-inline">MW</span></div>
+          <div class="input-wrap"><input type="number" id="psv-MW" value="29" step="0.1"><div class="unit-tag">g/mol</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Compressibility Z</span><span class="sym-inline">Z</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Z" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Specific Heat Ratio</span><span class="sym-inline">γ</span></div>
+          <div class="input-wrap"><input type="number" id="psv-gamma" value="1.4" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Discharge Coeff Kd</span><span class="sym-inline">Kd</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Kd" value="0.975" step="0.001"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Backpressure Correction Kb</span><span class="sym-inline">Kb</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Kb" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Combination Factor Kc</span><span class="sym-inline">Kc</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Kc" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+      </div>
+
+      <div id="psv-liquid-inputs" style="display:none">
+        <div class="input-group">
+          <div class="input-label"><span>Relief Rate (volumetric)</span><span class="sym-inline">Q</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Qliq" value="100" step="1"><div class="unit-tag">L/min</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Set Pressure</span><span class="sym-inline">Pset</span></div>
+          <div class="input-wrap"><input type="number" id="psv-PsetL" value="10" step="0.1"><div class="unit-tag">barg</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Back Pressure</span><span class="sym-inline">Pback</span></div>
+          <div class="input-wrap"><input type="number" id="psv-PbackL" value="2" step="0.1"><div class="unit-tag">barg</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Specific Gravity</span><span class="sym-inline">SG</span></div>
+          <div class="input-wrap"><input type="number" id="psv-SG" value="0.85" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Discharge Coeff Kd</span><span class="sym-inline">Kd</span></div>
+          <div class="input-wrap"><input type="number" id="psv-KdL" value="0.65" step="0.001"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Back-press Corr. Kw</span><span class="sym-inline">Kw</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Kw" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Viscosity Corr. Kv</span><span class="sym-inline">Kv</span></div>
+          <div class="input-wrap"><input type="number" id="psv-Kv" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Combination Factor Kc</span><span class="sym-inline">Kc</span></div>
+          <div class="input-wrap"><input type="number" id="psv-KcL" value="1.0" step="0.01"><div class="unit-tag">—</div></div>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcPSV()">CALCULATE ORIFICE AREA</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas</div>
+      <div id="psv-formula-gas">
+        <div class="formula-block">
+          <span class="formula-comment">// API 520 Part I — Gas/Vapor (critical flow)</span><br>
+          P1 = (Pset × 1.10) + 1.01325  <span class="formula-comment">bara</span><br><br>
+          <span class="formula-comment">// Check critical flow:</span><br>
+          Pcrit = P1 × [2/(γ+1)]^(γ/(γ−1))<br>
+          if Pback+1.013 &lt; Pcrit → critical (sonic) flow<br><br>
+          <span class="formula-comment">// Gas constant C:</span><br>
+          C = 520 × √[γ × (2/(γ+1))^((γ+1)/(γ−1))]<br><br>
+          <span class="formula-comment">// Required area (mm²):</span><br>
+          A = W / (C × Kd × P1 × Kb × Kc) × √(T × Z / MW) × 17.9
+        </div>
+      </div>
+      <div id="psv-formula-liquid" style="display:none">
+        <div class="formula-block">
+          <span class="formula-comment">// API 520 — Liquid relief</span><br>
+          P1 = Pset × 1.10 + 1.01325 bara<br>
+          ΔP = P1 − (Pback + 1.01325)<br><br>
+          <span class="formula-comment">// Q in m³/h, ρ in kg/m³:</span><br>
+          A = (Q/Kd/Kw/Kc/Kv) × √(SG / ΔP_bar) × 11.78<br>
+          <span class="formula-comment">// Result in mm²</span>
+        </div>
+      </div>
+
+      <div id="psv-result" class="result-block">
+        <div class="result-row"><span class="result-label">Relieving Pressure P1</span><span><span class="result-value" id="psv-res-P1">—</span><span class="result-unit">bara</span></span></div>
+        <div class="result-row"><span class="result-label">Gas Constant C</span><span><span class="result-value" id="psv-res-C">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Flow Regime</span><span><span class="result-value" id="psv-res-regime">—</span></span></div>
+        <div class="result-row"><span class="result-label">Required Orifice Area A</span><span><span class="result-value" id="psv-res-A">—</span><span class="result-unit">mm²</span></span></div>
+        <div class="result-row"><span class="result-label">Equivalent Orifice Dia.</span><span><span class="result-value" id="psv-res-D">—</span><span class="result-unit">mm</span></span></div>
+        <div class="result-row"><span class="result-label">Next API Orifice</span><span><span class="result-value" id="psv-res-std">—</span></span></div>
+        <div id="psv-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="card-title">Excel Formula Equivalent</div>
+      <div class="excel-block">
+        <span class="excel-label">P1:</span>=B3*1.1+1.01325<br>
+        <span class="excel-label">C:</span>=520*SQRT(gamma*(2/(gamma+1))^((gamma+1)/(gamma-1)))<br>
+        <span class="excel-label">A(gas):</span>=W/(C*Kd*P1*Kb*Kc)*SQRT(T*Z/MW)*17.9<br>
+        <span class="excel-label">D(mm):</span>=SQRT(A*4/PI())
+      </div>
+      <div class="warn-note">⚠ Kb from conventional PSV curves (API 520 Fig. 30). Kw from balanced bellows curves. Kv requires Reynolds number iteration for viscous liquids. Always round up to next standard API orifice letter designation.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 3: ORIFICE FLOW CALCULATION -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-orifice">
+  <div class="calc-header">
+    <div class="calc-title">ORIFICE PLATE FLOW CALCULATION</div>
+    <div class="calc-purpose">Calculates volumetric/mass flow rate from differential pressure measurement across an orifice plate. Uses Stolz equation for discharge coefficient per ISO 5167-2:2003. Also calculates beta ratio sizing from required flow.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">ISO 5167-2:2003</span>
+      <span class="calc-std-tag">AGA-3</span>
+    </div>
+  </div>
+
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit (SI)</th><th>Description</th></tr>
+        <tr><td class="sym">Cd</td><td class="unit">—</td><td class="desc">Discharge coefficient — ratio of actual to theoretical flow (Stolz / Reader-Harris Gallagher equation)</td></tr>
+        <tr><td class="sym">β</td><td class="unit">—</td><td class="desc">Beta ratio = d/D (bore diameter / pipe diameter) — recommended 0.2 – 0.75</td></tr>
+        <tr><td class="sym">Re</td><td class="unit">—</td><td class="desc">Pipe Reynolds number = ρ × V × D / μ (must be > minimum for Cd validity)</td></tr>
+        <tr><td class="sym">ρ</td><td class="unit">kg/m³</td><td class="desc">Fluid density at flowing conditions (upstream)</td></tr>
+        <tr><td class="sym">ΔP</td><td class="unit">Pa (or mbar)</td><td class="desc">Differential pressure measured across orifice taps</td></tr>
+        <tr><td class="sym">D</td><td class="unit">mm</td><td class="desc">Internal pipe diameter (upstream, at flowing conditions)</td></tr>
+        <tr><td class="sym">d</td><td class="unit">mm</td><td class="desc">Orifice bore diameter (at flowing conditions)</td></tr>
+        <tr><td class="sym">μ</td><td class="unit">Pa·s</td><td class="desc">Dynamic viscosity of fluid</td></tr>
+        <tr><td class="sym">ε</td><td class="unit">—</td><td class="desc">Gas expansibility factor (= 1.0 for liquids; for gases varies with β, ΔP/P1)</td></tr>
+        <tr><td class="sym">A</td><td class="unit">m²</td><td class="desc">Cross-sectional area of orifice bore = π/4 × d²</td></tr>
+        <tr><td class="sym">qm</td><td class="unit">kg/s</td><td class="desc">Mass flow rate</td></tr>
+        <tr><td class="sym">qv</td><td class="unit">m³/h</td><td class="desc">Volumetric flow rate at flowing conditions</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Parameters</div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="or-meas-btn" onclick="setOrMode('measure')">FLOW FROM ΔP</button>
+        <button class="mode-btn" id="or-size-btn" onclick="setOrMode('size')">SIZE BETA RATIO</button>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label"><span>Pipe ID</span><span class="sym-inline">D</span></div>
+        <div class="input-wrap"><input type="number" id="or-D" value="100" step="0.1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group" id="or-grp-d">
+        <div class="input-label"><span>Orifice Bore</span><span class="sym-inline">d</span></div>
+        <div class="input-wrap"><input type="number" id="or-d" value="65" step="0.1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group" id="or-grp-Qreq" style="display:none">
+        <div class="input-label"><span>Required Flow</span><span class="sym-inline">qv</span></div>
+        <div class="input-wrap"><input type="number" id="or-Qreq" value="50" step="0.1"><div class="unit-tag">m³/h</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Differential Pressure</span><span class="sym-inline">ΔP</span></div>
+        <div class="input-wrap"><input type="number" id="or-dP" value="2500" step="10"><div class="unit-tag">Pa</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Fluid Density</span><span class="sym-inline">ρ</span></div>
+        <div class="input-wrap"><input type="number" id="or-rho" value="1000" step="1"><div class="unit-tag">kg/m³</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Dynamic Viscosity</span><span class="sym-inline">μ</span></div>
+        <div class="input-wrap"><input type="number" id="or-mu" value="0.001" step="0.0001"><div class="unit-tag">Pa·s</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Tap Type</span><span class="sym-inline">—</span></div>
+        <div class="input-wrap">
+          <select id="or-tap">
+            <option value="flange">Flange Taps (D/D)</option>
+            <option value="d1d2">D &amp; D/2 Taps</option>
+            <option value="corner">Corner Taps</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Expansibility ε</span><span class="sym-inline">ε</span></div>
+        <div class="input-wrap"><input type="number" id="or-eps" value="1.0" step="0.001"><div class="unit-tag">—</div></div>
+      </div>
+      <button class="calc-btn" onclick="calcOrifice()">CALCULATE FLOW</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formula (ISO 5167-2)</div>
+      <div class="formula-block">
+        <span class="formula-comment">// Mass flow rate (ISO 5167):</span><br>
+        qm = Cd/(√(1−β⁴)) × ε × (π/4)×d² × √(2×ρ×ΔP)<br><br>
+        <span class="formula-comment">// Volumetric flow (m³/h):</span><br>
+        qv = qm/ρ × 3600<br><br>
+        <span class="formula-comment">// Pipe Reynolds number:</span><br>
+        Re_D = 4×qm / (π × D × μ)<br><br>
+        <span class="formula-comment">// Cd — Reader-Harris/Gallagher (ISO 5167-2:2003):</span><br>
+        Cd = 0.5961 + 0.0261β² − 0.216β⁸<br>
+             + 0.000521(10⁶β/Re)^0.7<br>
+             + (0.0188+0.0063A)β³·⁵(10⁶/Re)^0.3<br>
+             + (0.043+0.080e^(−10L1)−0.123e^(−7L1))<br>
+               ×(1−0.11A)×β⁴/(1−β⁴)<br>
+             − 0.031(M2'−0.8M2'^1.1)β^1.3<br>
+        where A=(19000β/Re)^0.8; L1,M2' depend on tap type
+      </div>
+
+      <div id="orifice-result" class="result-block">
+        <div class="result-row"><span class="result-label">Beta Ratio β = d/D</span><span><span class="result-value" id="or-res-beta">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Discharge Coeff Cd</span><span><span class="result-value" id="or-res-Cd">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Pipe Reynolds No. Re</span><span><span class="result-value" id="or-res-Re">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Mass Flow Rate qm</span><span><span class="result-value" id="or-res-qm">—</span><span class="result-unit">kg/s</span></span></div>
+        <div class="result-row"><span class="result-label">Volumetric Flow qv</span><span><span class="result-value" id="or-res-qv">—</span><span class="result-unit">m³/h</span></span></div>
+        <div class="result-row"><span class="result-label">Velocity in Pipe</span><span><span class="result-value" id="or-res-V">—</span><span class="result-unit">m/s</span></span></div>
+        <div id="or-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="card-title">Excel Formula Equivalent</div>
+      <div class="excel-block">
+        <span class="excel-label">β:</span>=d_mm/D_mm<br>
+        <span class="excel-label">A_bore(m²):</span>=PI()/4*(d_mm/1000)^2<br>
+        <span class="excel-label">qm(kg/s):</span>=Cd/SQRT(1-β^4)*eps*A_bore*SQRT(2*rho*dP)<br>
+        <span class="excel-label">Re_D:</span>=4*qm/(PI()*(D_mm/1000)*mu)
+      </div>
+      <div class="warn-note">⚠ Cd requires iterative solution. β must be 0.20–0.75 per ISO 5167. Minimum Re applies per tap type. Verify straight-run requirements upstream/downstream.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 4: DP LEVEL TRANSMITTER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-dp">
+  <div class="calc-header">
+    <div class="calc-title">DP LEVEL TRANSMITTER — Wet Leg / Dry Leg / Interface</div>
+    <div class="calc-purpose">Calculates differential pressure transmitter calibration range for wet-leg and dry-leg level measurement configurations. Includes interface level and density compensation calculations for two-phase service.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">ISA-5.1</span>
+      <span class="calc-std-tag">IEC 60770</span>
+    </div>
+  </div>
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit (SI)</th><th>Description</th></tr>
+        <tr><td class="sym">h</td><td class="unit">m</td><td class="desc">Level height from datum (transmitter lower tap)</td></tr>
+        <tr><td class="sym">ρ</td><td class="unit">kg/m³</td><td class="desc">Process fluid density</td></tr>
+        <tr><td class="sym">ρ_wl</td><td class="unit">kg/m³</td><td class="desc">Wet-leg fill fluid density</td></tr>
+        <tr><td class="sym">ρ_L</td><td class="unit">kg/m³</td><td class="desc">Lower layer (heavy) fluid density (interface)</td></tr>
+        <tr><td class="sym">ρ_U</td><td class="unit">kg/m³</td><td class="desc">Upper layer (light) fluid density (interface)</td></tr>
+        <tr><td class="sym">g</td><td class="unit">m/s²</td><td class="desc">Gravitational acceleration (9.81 standard)</td></tr>
+        <tr><td class="sym">P</td><td class="unit">Pa / bar</td><td class="desc">Hydrostatic pressure = ρ × g × h</td></tr>
+        <tr><td class="sym">ΔP</td><td class="unit">Pa / mbar</td><td class="desc">Differential pressure = P_HP − P_LP (transmitter signal)</td></tr>
+        <tr><td class="sym">SG</td><td class="unit">—</td><td class="desc">Specific gravity = ρ_fluid / ρ_water (ρ_water = 999.7 kg/m³)</td></tr>
+        <tr><td class="sym">H_wl</td><td class="unit">m</td><td class="desc">Wet-leg height (height of fill fluid column on HP/LP side)</td></tr>
+        <tr><td class="sym">H_span</td><td class="unit">m</td><td class="desc">Measurement span (high level minus low level datum)</td></tr>
+        <tr><td class="sym">LRV</td><td class="unit">mbar</td><td class="desc">Lower Range Value — ΔP at 0% level</td></div>
+        <tr><td class="sym">URV</td><td class="unit">mbar</td><td class="desc">Upper Range Value — ΔP at 100% level</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Configuration &amp; Inputs</div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="dp-dry-btn" onclick="setDpMode('dry')">DRY LEG</button>
+        <button class="mode-btn" id="dp-wet-btn" onclick="setDpMode('wet')">WET LEG</button>
+        <button class="mode-btn" id="dp-int-btn" onclick="setDpMode('interface')">INTERFACE</button>
+      </div>
+
+      <div id="dp-common-inputs">
+        <div class="input-group">
+          <div class="input-label"><span>Vessel Span (H_span)</span><span class="sym-inline">H</span></div>
+          <div class="input-wrap"><input type="number" id="dp-H" value="2.0" step="0.1"><div class="unit-tag">m</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Process Fluid Density</span><span class="sym-inline">ρ</span></div>
+          <div class="input-wrap"><input type="number" id="dp-rho" value="850" step="1"><div class="unit-tag">kg/m³</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Transmitter Elevation below LT</span><span class="sym-inline">hLT</span></div>
+          <div class="input-wrap"><input type="number" id="dp-hLT" value="0" step="0.01"><div class="unit-tag">m</div></div>
+        </div>
+      </div>
+
+      <div id="dp-wet-inputs" style="display:none">
+        <div class="input-group">
+          <div class="input-label"><span>Wet Leg Fill Density</span><span class="sym-inline">ρ_wl</span></div>
+          <div class="input-wrap"><input type="number" id="dp-rhoWL" value="1000" step="1"><div class="unit-tag">kg/m³</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Wet Leg Height</span><span class="sym-inline">H_wl</span></div>
+          <div class="input-wrap"><input type="number" id="dp-Hwl" value="2.5" step="0.1"><div class="unit-tag">m</div></div>
+        </div>
+      </div>
+
+      <div id="dp-interface-inputs" style="display:none">
+        <div class="input-group">
+          <div class="input-label"><span>Upper (Light) Fluid Density</span><span class="sym-inline">ρ_U</span></div>
+          <div class="input-wrap"><input type="number" id="dp-rhoU" value="750" step="1"><div class="unit-tag">kg/m³</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Lower (Heavy) Fluid Density</span><span class="sym-inline">ρ_L</span></div>
+          <div class="input-wrap"><input type="number" id="dp-rhoL" value="1000" step="1"><div class="unit-tag">kg/m³</div></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label"><span>Total Vessel Height (filled)</span><span class="sym-inline">H_total</span></div>
+          <div class="input-wrap"><input type="number" id="dp-Htotal" value="3.0" step="0.1"><div class="unit-tag">m</div></div>
+        </div>
+      </div>
+
+      <button class="calc-btn" onclick="calcDP()">CALCULATE CALIBRATION RANGE</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas</div>
+      <div class="formula-block">
+        <span class="formula-comment">// DRY LEG (open vessel or gas blanket on LP)</span><br>
+        LRV = ρ × g × 0 = 0 Pa  <span class="formula-comment">(0% level)</span><br>
+        URV = ρ × g × H_span   <span class="formula-comment">(100% level)</span><br><br>
+        <span class="formula-comment">// WET LEG (LP side filled with seal fluid)</span><br>
+        P_HP = P_gas + ρ × g × h<br>
+        P_LP = P_gas + ρ_wl × g × H_wl<br>
+        ΔP = P_HP − P_LP<br>
+        LRV = −ρ_wl × g × H_wl  <span class="formula-comment">(suppress)</span><br>
+        URV = ρ × g × H − ρ_wl × g × H_wl<br><br>
+        <span class="formula-comment">// INTERFACE LEVEL (two-phase separation)</span><br>
+        ΔP = ρ_U × g × (H−h_int) + ρ_L × g × h_int<br>
+        <span class="formula-comment">// LRV: h_int=0 (all upper fluid)</span><br>
+        <span class="formula-comment">// URV: h_int=H (all lower fluid)</span>
+      </div>
+
+      <div id="dp-result" class="result-block">
+        <div class="result-row"><span class="result-label">LRV (0% Level)</span><span><span class="result-value" id="dp-res-LRV">—</span><span class="result-unit">mbar</span></span></div>
+        <div class="result-row"><span class="result-label">URV (100% Level)</span><span><span class="result-value" id="dp-res-URV">—</span><span class="result-unit">mbar</span></span></div>
+        <div class="result-row"><span class="result-label">Calibration Span</span><span><span class="result-value" id="dp-res-span">—</span><span class="result-unit">mbar</span></span></div>
+        <div class="result-row"><span class="result-label">Elevation Correction</span><span><span class="result-value" id="dp-res-elev">—</span><span class="result-unit">mbar</span></span></div>
+        <div id="dp-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="card-title">Excel Formula Equivalent</div>
+      <div class="excel-block">
+        <span class="excel-label">LRV(dry):</span>=-rho*9.81*hLT/100  [mbar]<br>
+        <span class="excel-label">URV(dry):</span>=rho*9.81*H/100 - rho*9.81*hLT/100<br>
+        <span class="excel-label">LRV(wet):</span>=-(rhoWL*9.81*Hwl)/100<br>
+        <span class="excel-label">URV(wet):</span>=rho*9.81*H/100 - rhoWL*9.81*Hwl/100
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 5: CABLE SIZING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-cable">
+  <div class="calc-header">
+    <div class="calc-title">CABLE SIZING — Power &amp; Control Cables</div>
+    <div class="calc-purpose">Determines minimum cable cross-section based on current carrying capacity, voltage drop limit, and short-circuit rating. Applies derating factors for ambient temperature, grouping, and installation method per IEC 60364-5-52 and IEEE 835.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">IEC 60364-5-52</span>
+      <span class="calc-std-tag">IEC 60228</span>
+      <span class="calc-std-tag">IEEE 835</span>
+      <span class="calc-std-tag">NFPA 70 NEC</span>
+    </div>
+  </div>
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit</th><th>Description</th></tr>
+        <tr><td class="sym">I</td><td class="unit">A</td><td class="desc">Design load current (full-load operating current)</td></tr>
+        <tr><td class="sym">I_z</td><td class="unit">A</td><td class="desc">Tabulated current-carrying capacity (from IEC 60364 table)</td></tr>
+        <tr><td class="sym">I_t</td><td class="unit">A</td><td class="desc">Minimum required cable current capacity after derating: I_t = I / (Ca×Cg×Cs×Ci)</td></tr>
+        <tr><td class="sym">V</td><td class="unit">V</td><td class="desc">System supply voltage (line-to-line for 3-phase)</td></tr>
+        <tr><td class="sym">ΔV</td><td class="unit">V</td><td class="desc">Allowable voltage drop (typically 3–5% of V nominal)</td></tr>
+        <tr><td class="sym">R</td><td class="unit">mΩ/m</td><td class="desc">AC resistance of conductor at operating temperature</td></tr>
+        <tr><td class="sym">X</td><td class="unit">mΩ/m</td><td class="desc">Reactance of cable (significant for large cables >50mm²)</td></tr>
+        <tr><td class="sym">L</td><td class="unit">m</td><td class="desc">One-way cable route length</td></tr>
+        <tr><td class="sym">PF</td><td class="unit">—</td><td class="desc">Load power factor (cosφ)</td></tr>
+        <tr><td class="sym">k</td><td class="unit">A·s^0.5/mm²</td><td class="desc">Thermal constant for short-circuit (Cu XLPE: 143; Cu PVC: 115; Al: 76)</td></tr>
+        <tr><td class="sym">S</td><td class="unit">mm²</td><td class="desc">Required conductor cross-section for short-circuit: S = √(I²t) / k</td></tr>
+        <tr><td class="sym">Ca</td><td class="unit">—</td><td class="desc">Ambient temperature derating factor</td></tr>
+        <tr><td class="sym">Cg</td><td class="unit">—</td><td class="desc">Cable grouping/bunching derating factor</td></tr>
+        <tr><td class="sym">Cs</td><td class="unit">—</td><td class="desc">Soil thermal resistivity derating (underground cables)</td></tr>
+        <tr><td class="sym">Ci</td><td class="unit">—</td><td class="desc">Installation method factor</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Parameters</div>
+      <div class="input-group">
+        <div class="input-label"><span>Load Current</span><span class="sym-inline">I</span></div>
+        <div class="input-wrap"><input type="number" id="cb-I" value="45" step="0.1"><div class="unit-tag">A</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>System Voltage (L-L)</span><span class="sym-inline">V</span></div>
+        <div class="input-wrap"><input type="number" id="cb-V" value="400" step="1"><div class="unit-tag">V</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Cable Run Length</span><span class="sym-inline">L</span></div>
+        <div class="input-wrap"><input type="number" id="cb-L" value="150" step="1"><div class="unit-tag">m</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Power Factor</span><span class="sym-inline">PF</span></div>
+        <div class="input-wrap"><input type="number" id="cb-PF" value="0.85" step="0.01"><div class="unit-tag">—</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Max. Allowable VD</span><span class="sym-inline">ΔV%</span></div>
+        <div class="input-wrap"><input type="number" id="cb-VDpct" value="3" step="0.5"><div class="unit-tag">%</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Ambient Temperature</span><span class="sym-inline">T_amb</span></div>
+        <div class="input-wrap"><input type="number" id="cb-Tamb" value="40" step="1"><div class="unit-tag">°C</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>No. of Grouped Circuits</span><span class="sym-inline">n</span></div>
+        <div class="input-wrap"><input type="number" id="cb-n" value="4" step="1"><div class="unit-tag">—</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Insulation Type</span><span class="sym-inline">—</span></div>
+        <div class="input-wrap">
+          <select id="cb-insul">
+            <option value="xlpe">XLPE/EPR (90°C)</option>
+            <option value="pvc">PVC (70°C)</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Conductor Material</span><span class="sym-inline">—</span></div>
+        <div class="input-wrap">
+          <select id="cb-cond">
+            <option value="cu">Copper (Cu)</option>
+            <option value="al">Aluminium (Al)</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Short-circuit Current</span><span class="sym-inline">Isc</span></div>
+        <div class="input-wrap"><input type="number" id="cb-Isc" value="5000" step="100"><div class="unit-tag">A</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Fault Clearance Time</span><span class="sym-inline">t</span></div>
+        <div class="input-wrap"><input type="number" id="cb-t" value="0.5" step="0.1"><div class="unit-tag">s</div></div>
+      </div>
+      <button class="calc-btn" onclick="calcCable()">CALCULATE CABLE SIZE</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas</div>
+      <div class="formula-block">
+        <span class="formula-comment">// 1. Current Carrying Capacity (IEC 60364-5-52)</span><br>
+        Ca = √((T_max − T_amb)/(T_max − T_ref))  <span class="formula-comment">temp derating</span><br>
+        Cg = grouping factor from IEC Table B.52.20<br>
+        I_t = I / (Ca × Cg)  <span class="formula-comment">min required Iz</span><br><br>
+        <span class="formula-comment">// 2. Voltage Drop (3-phase)</span><br>
+        ΔV = √3 × I × L × (R×cosφ + X×sinφ) / 1000<br>
+        S_vd = √3 × I × L × PF / (ΔV_max × ρc × 1000)<br>
+        <span class="formula-comment">// ρc(Cu)=0.0172 Ω·mm²/m, ρc(Al)=0.0282</span><br><br>
+        <span class="formula-comment">// 3. Short-circuit Rating (Adiabatic)</span><br>
+        S_sc = Isc × √t / k<br>
+        <span class="formula-comment">// k(Cu XLPE)=143, k(Cu PVC)=115, k(Al)=76</span><br><br>
+        <span class="formula-comment">// Final size = MAX of all three requirements</span><br>
+        S_final = MAX(S_cc, S_vd, S_sc)  → round to std size
+      </div>
+
+      <div id="cable-result" class="result-block">
+        <div class="result-row"><span class="result-label">Temp Derating Ca</span><span><span class="result-value" id="cb-res-Ca">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Group Derating Cg</span><span><span class="result-value" id="cb-res-Cg">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Min Size (Current)</span><span><span class="result-value" id="cb-res-Scc">—</span><span class="result-unit">mm²</span></span></div>
+        <div class="result-row"><span class="result-label">Min Size (Voltage Drop)</span><span><span class="result-value" id="cb-res-Svd">—</span><span class="result-unit">mm²</span></span></div>
+        <div class="result-row"><span class="result-label">Min Size (Short-circuit)</span><span><span class="result-value" id="cb-res-Ssc">—</span><span class="result-unit">mm²</span></span></div>
+        <div class="result-row"><span class="result-label">GOVERNING SIZE</span><span><span class="result-value" id="cb-res-final" style="font-size:20px">—</span><span class="result-unit">mm²</span></span></div>
+        <div class="result-row"><span class="result-label">Actual Voltage Drop</span><span><span class="result-value" id="cb-res-VD">—</span><span class="result-unit">% / V</span></span></div>
+        <div id="cable-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="card-title">Excel Formula Equivalent</div>
+      <div class="excel-block">
+        <span class="excel-label">Ca:</span>=SQRT((Tmax-Tamb)/(Tmax-30))<br>
+        <span class="excel-label">I_t:</span>=I/(Ca*Cg)<br>
+        <span class="excel-label">S_vd:</span>=SQRT(3)*I*L*PF/(dV_max*17.241)<br>
+        <span class="excel-label">S_sc:</span>=Isc*SQRT(t)/k_factor<br>
+        <span class="excel-label">S_final:</span>=MAX(S_cc, S_vd, S_sc) → round up to std
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 6: SIL / PFDavg -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-sil">
+  <div class="calc-header">
+    <div class="calc-title">SIL / PFD avg CALCULATION — Safety Instrumented Function</div>
+    <div class="calc-purpose">Calculates the average Probability of Failure on Demand (PFDavg) for a Safety Instrumented Function (SIF) and verifies attainment of the target SIL per IEC 61511 / ISA-84. Covers 1oo1, 1oo2, 2oo2, and 2oo3 architectures.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">IEC 61511-1</span>
+      <span class="calc-std-tag">ISA-84.00.01</span>
+      <span class="calc-std-tag">IEC 61508</span>
+    </div>
+  </div>
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit</th><th>Description</th></tr>
+        <tr><td class="sym">λ_D</td><td class="unit">h⁻¹</td><td class="desc">Dangerous failure rate per device (from FMEDA / supplier SIL data sheet)</td></tr>
+        <tr><td class="sym">λ_DU</td><td class="unit">h⁻¹</td><td class="desc">Dangerous Undetected failure rate = λ_D × (1 − DC)</td></tr>
+        <tr><td class="sym">λ_DD</td><td class="unit">h⁻¹</td><td class="desc">Dangerous Detected failure rate = λ_D × DC</td></tr>
+        <tr><td class="sym">TI</td><td class="unit">h</td><td class="desc">Proof Test Interval (time between full functional tests)</td></tr>
+        <tr><td class="sym">PFDavg</td><td class="unit">—</td><td class="desc">Average Probability of Failure on Demand over proof test interval</td></tr>
+        <tr><td class="sym">RRF</td><td class="unit">—</td><td class="desc">Risk Reduction Factor = 1/PFDavg</td></tr>
+        <tr><td class="sym">DC</td><td class="unit">—</td><td class="desc">Diagnostic Coverage — fraction of dangerous failures detected by diagnostics</td></tr>
+        <tr><td class="sym">β</td><td class="unit">—</td><td class="desc">Common Cause Failure fraction (CCF) — typically 1–10%</td></tr>
+        <tr><td class="sym">MTTF</td><td class="unit">years</td><td class="desc">Mean Time to Fail (dangerous) = 1 / (λ_DU × 8760)</td></tr>
+        <tr><td class="sym">T_MRT</td><td class="unit">h</td><td class="desc">Mean Repair Time after detected failure (MTTR)</td></tr>
+        <tr><td class="sym">SIL</td><td class="unit">—</td><td class="desc">Safety Integrity Level (1, 2, 3, or 4)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Parameters</div>
+      <div class="input-group">
+        <div class="input-label"><span>Dangerous Failure Rate</span><span class="sym-inline">λ_D</span></div>
+        <div class="input-wrap"><input type="number" id="sil-lD" value="1.5e-6" step="1e-7"><div class="unit-tag">h⁻¹</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Diagnostic Coverage</span><span class="sym-inline">DC</span></div>
+        <div class="input-wrap"><input type="number" id="sil-DC" value="0.90" step="0.01"><div class="unit-tag">—</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Proof Test Interval</span><span class="sym-inline">TI</span></div>
+        <div class="input-wrap"><input type="number" id="sil-TI" value="8760" step="100"><div class="unit-tag">h</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Mean Repair Time</span><span class="sym-inline">T_MRT</span></div>
+        <div class="input-wrap"><input type="number" id="sil-MRT" value="8" step="1"><div class="unit-tag">h</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>CCF Fraction</span><span class="sym-inline">β</span></div>
+        <div class="input-wrap"><input type="number" id="sil-beta" value="0.05" step="0.01"><div class="unit-tag">—</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Architecture</span><span class="sym-inline">MooN</span></div>
+        <div class="input-wrap">
+          <select id="sil-arch">
+            <option value="1oo1">1oo1 (Single Channel)</option>
+            <option value="1oo2">1oo2 (Redundant Voting)</option>
+            <option value="2oo2">2oo2 (Series)</option>
+            <option value="2oo3">2oo3 (Voting)</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Number of SIF Subsystems</span><span class="sym-inline">n</span></div>
+        <div class="input-wrap">
+          <select id="sil-nsub">
+            <option value="3">3 (Sensor + Logic + Final)</option>
+            <option value="1">1 (Single element)</option>
+            <option value="2">2 (Two elements)</option>
+          </select>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Target SIL</span><span class="sym-inline">SIL</span></div>
+        <div class="input-wrap">
+          <select id="sil-target">
+            <option value="1">SIL 1 (PFDavg: 0.1 – 0.01)</option>
+            <option value="2" selected>SIL 2 (PFDavg: 0.01 – 0.001)</option>
+            <option value="3">SIL 3 (PFDavg: 0.001 – 0.0001)</option>
+          </select>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calcSIL()">CALCULATE PFDavg</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas (IEC 61511)</div>
+      <div class="formula-block">
+        <span class="formula-comment">// Undetected/Detected failure rates:</span><br>
+        λ_DU = λ_D × (1 − DC)<br>
+        λ_DD = λ_D × DC<br><br>
+        <span class="formula-comment">// 1oo1 Architecture:</span><br>
+        PFDavg_1oo1 = λ_DU × TI/2 + λ_DD × T_MRT/2<br><br>
+        <span class="formula-comment">// 1oo2 (redundant, CCF included):</span><br>
+        PFDavg_1oo2 = (1−β)² × (λ_DU×TI/2)² × 2/3<br>
+                    + (1−β)²×λ_DU×λ_DD×T_MRT×TI/2<br>
+                    + β × λ_DU × TI/2<br><br>
+        <span class="formula-comment">// 2oo3 Architecture:</span><br>
+        PFDavg_2oo3 = (1−β)² × 3 × (λ_DU×TI/2)² + β×λ_DU×TI/2<br><br>
+        <span class="formula-comment">// Full SIF (sensors + logic + final elements):</span><br>
+        PFDavg_SIF = Σ PFDavg_i  (series combination)<br>
+        RRF = 1 / PFDavg_SIF
+      </div>
+
+      <div id="sil-result" class="result-block">
+        <div class="result-row"><span class="result-label">λ_DU (undetected)</span><span><span class="result-value" id="sil-res-lDU">—</span><span class="result-unit">h⁻¹</span></span></div>
+        <div class="result-row"><span class="result-label">λ_DD (detected)</span><span><span class="result-value" id="sil-res-lDD">—</span><span class="result-unit">h⁻¹</span></span></div>
+        <div class="result-row"><span class="result-label">PFDavg (one subsystem)</span><span><span class="result-value" id="sil-res-PFD1">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">PFDavg (full SIF)</span><span><span class="result-value" id="sil-res-PFD">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Risk Reduction Factor RRF</span><span><span class="result-value" id="sil-res-RRF">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">MTTF_D (dangerous)</span><span><span class="result-value" id="sil-res-MTTF">—</span><span class="result-unit">years</span></span></div>
+        <div class="result-row"><span class="result-label">SIL ACHIEVED</span><span><span class="result-value" id="sil-res-SIL" style="font-size:20px">—</span></span></div>
+        <div id="sil-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="excel-block">
+        <span class="excel-label">λ_DU:</span>=lambda_D*(1-DC)<br>
+        <span class="excel-label">PFD_1oo1:</span>=lDU*TI/2 + lDD*MRT/2<br>
+        <span class="excel-label">PFD_SIF:</span>=PFD_sensor + PFD_logic + PFD_final<br>
+        <span class="excel-label">RRF:</span>=1/PFD_SIF
+      </div>
+      <div class="warn-note">⚠ This is a simplified PFDavg model per IEC 61511 Annex K. Full verification requires FMEDA data, CCF analysis per IEC 61508 Annex D, and architectural constraints (HFT, SFF). Results must be validated by a qualified Functional Safety Engineer.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 7: THERMOWELL WAKE FREQUENCY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-tw">
+  <div class="calc-header">
+    <div class="calc-title">THERMOWELL WAKE FREQUENCY CALCULATION</div>
+    <div class="calc-purpose">Evaluates thermowell structural integrity against vortex-induced vibration (VIV) by comparing the Strouhal vortex shedding frequency to the thermowell natural frequency. Applies ASME PTC 19.3 TW-2016 in-line and transverse resonance checks.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">ASME PTC 19.3 TW-2016</span>
+      <span class="calc-std-tag">ASME B31.3</span>
+    </div>
+  </div>
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit</th><th>Description</th></tr>
+        <tr><td class="sym">St</td><td class="unit">—</td><td class="desc">Strouhal number — dimensionless vortex shedding constant ≈ 0.22 (cylinders, Re 10³–10⁵)</td></tr>
+        <tr><td class="sym">V</td><td class="unit">m/s</td><td class="desc">Process fluid velocity past the thermowell tip</td></tr>
+        <tr><td class="sym">d</td><td class="unit">mm</td><td class="desc">Thermowell tip (outside) diameter at measurement point</td></tr>
+        <tr><td class="sym">d_root</td><td class="unit">mm</td><td class="desc">Thermowell root (outside) diameter (at process connection)</td></tr>
+        <tr><td class="sym">L</td><td class="unit">mm</td><td class="desc">Unsupported thermowell insertion length (from process connection to tip)</td></tr>
+        <tr><td class="sym">fn</td><td class="unit">Hz</td><td class="desc">Natural frequency of thermowell (first bending mode)</td></tr>
+        <tr><td class="sym">fs</td><td class="unit">Hz</td><td class="desc">Vortex shedding frequency = St × V / d</td></tr>
+        <tr><td class="sym">ρ</td><td class="unit">kg/m³</td><td class="desc">Process fluid density</td></tr>
+        <tr><td class="sym">E</td><td class="unit">GPa</td><td class="desc">Young's modulus of thermowell material</td></tr>
+        <tr><td class="sym">ρ_m</td><td class="unit">kg/m³</td><td class="desc">Density of thermowell material</td></tr>
+        <tr><td class="sym">r</td><td class="unit">—</td><td class="desc">Frequency ratio = fs / fn (must be &lt;0.8 in-situ, &lt;0.4 ASME alarm)</td></tr>
+        <tr><td class="sym">m</td><td class="unit">—</td><td class="desc">Safety margin ratio (ASME PTC 19.3 requires r &lt; 0.8 for transverse, &lt; 0.5 in-line)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Parameters</div>
+      <div class="input-group">
+        <div class="input-label"><span>Fluid Velocity (at TW)</span><span class="sym-inline">V</span></div>
+        <div class="input-wrap"><input type="number" id="tw-V" value="3.5" step="0.1"><div class="unit-tag">m/s</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Tip Outer Diameter</span><span class="sym-inline">d_tip</span></div>
+        <div class="input-wrap"><input type="number" id="tw-dtip" value="11.1" step="0.1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Root Outer Diameter</span><span class="sym-inline">d_root</span></div>
+        <div class="input-wrap"><input type="number" id="tw-droot" value="20.9" step="0.1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Bore Diameter</span><span class="sym-inline">d_bore</span></div>
+        <div class="input-wrap"><input type="number" id="tw-dbore" value="6.4" step="0.1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Insertion Length</span><span class="sym-inline">L</span></div>
+        <div class="input-wrap"><input type="number" id="tw-L" value="250" step="1"><div class="unit-tag">mm</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Young's Modulus</span><span class="sym-inline">E</span></div>
+        <div class="input-wrap"><input type="number" id="tw-E" value="200" step="1"><div class="unit-tag">GPa</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Material Density</span><span class="sym-inline">ρ_m</span></div>
+        <div class="input-wrap"><input type="number" id="tw-rhom" value="7900" step="10"><div class="unit-tag">kg/m³</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Fluid Density</span><span class="sym-inline">ρ_f</span></div>
+        <div class="input-wrap"><input type="number" id="tw-rhof" value="850" step="1"><div class="unit-tag">kg/m³</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Strouhal Number</span><span class="sym-inline">St</span></div>
+        <div class="input-wrap"><input type="number" id="tw-St" value="0.22" step="0.01"><div class="unit-tag">—</div></div>
+      </div>
+      <button class="calc-btn" onclick="calcThermowell()">CHECK WAKE FREQUENCY</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas (ASME PTC 19.3 TW)</div>
+      <div class="formula-block">
+        <span class="formula-comment">// Vortex shedding frequency:</span><br>
+        fs = St × V / d_tip  (Hz)<br><br>
+        <span class="formula-comment">// Natural frequency (cantilever, ASME PTC 19.3):</span><br>
+        <span class="formula-comment">// For tapered TW, use equivalent uniform model:</span><br>
+        fn = (K²/(2π×L²)) × √(E × I / ρ_eff × A_eff)<br><br>
+        <span class="formula-comment">// Simplified for solid/hollow cylinder cantilever:</span><br>
+        I = π/64 × (d_avg⁴ − d_bore⁴)  [m⁴]<br>
+        A = π/4 × (d_avg² − d_bore²)   [m²]<br>
+        K = 1.875 (first mode cantilever constant)<br>
+        fn = (K²/(2π×L²)) × √(E×I / (ρ_m×A × (1 + Ca×ρf/ρm)))<br>
+        <span class="formula-comment">// Ca = added mass coeff ≈ 1.0 for cylinder</span><br><br>
+        <span class="formula-comment">// Frequency ratio (resonance check):</span><br>
+        r = fs / fn<br>
+        Limit: r &lt; 0.8 transverse, r &lt; 0.5 in-line
+      </div>
+
+      <div id="tw-result" class="result-block">
+        <div class="result-row"><span class="result-label">Shedding Frequency fs</span><span><span class="result-value" id="tw-res-fs">—</span><span class="result-unit">Hz</span></span></div>
+        <div class="result-row"><span class="result-label">Natural Frequency fn</span><span><span class="result-value" id="tw-res-fn">—</span><span class="result-unit">Hz</span></span></div>
+        <div class="result-row"><span class="result-label">Frequency Ratio r</span><span><span class="result-value" id="tw-res-r">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Safety Margin (1-r)</span><span><span class="result-value" id="tw-res-margin">—</span><span class="result-unit">—</span></span></div>
+        <div class="result-row"><span class="result-label">Max Safe Velocity</span><span><span class="result-value" id="tw-res-Vmax">—</span><span class="result-unit">m/s</span></span></div>
+        <div id="tw-validation"></div>
+      </div>
+      <div class="warn-note">⚠ Full ASME PTC 19.3 TW analysis requires fatigue stress evaluation, drag force, static bending stress, and pressure/temperature limits. This calculator covers the frequency ratio check only. FEA verification recommended for critical services.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- CALC 8: HEAT DISSIPATION (CONTROL PANEL) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="calc-panel" id="panel-heat">
+  <div class="calc-header">
+    <div class="calc-title">CONTROL PANEL HEAT DISSIPATION &amp; VENTILATION</div>
+    <div class="calc-purpose">Calculates internal temperature rise and required ventilation (forced or natural) for electrical control panels and marshalling cabinets. Includes equipment heat load inventory, effective surface area, and fan sizing per thermal transfer principles.</div>
+    <div class="calc-standards">
+      <span class="calc-std-tag">IEC 62208</span>
+      <span class="calc-std-tag">IEC 61439-1</span>
+      <span class="calc-std-tag">Rittal TS 8 Method</span>
+    </div>
+  </div>
+  <div class="calc-grid">
+    <div class="card span-2">
+      <div class="card-title">Variable Legend</div>
+      <table class="legend-table">
+        <tr><th>Symbol</th><th>Unit</th><th>Description</th></tr>
+        <tr><td class="sym">P_total</td><td class="unit">W</td><td class="desc">Total heat dissipation inside enclosure (sum of all equipment losses)</td></tr>
+        <tr><td class="sym">A_eff</td><td class="unit">m²</td><td class="desc">Effective heat-dissipating surface area of enclosure (exposed panel walls)</td></tr>
+        <tr><td class="sym">ΔT</td><td class="unit">°C</td><td class="desc">Temperature rise = T_internal − T_ambient</td></tr>
+        <tr><td class="sym">h</td><td class="unit">W/(m²·K)</td><td class="desc">Heat transfer coefficient — natural convection 5–8 W/(m²·K), forced 15–30</td></tr>
+        <tr><td class="sym">T_amb</td><td class="unit">°C</td><td class="desc">Ambient temperature outside the panel</td></tr>
+        <tr><td class="sym">T_max</td><td class="unit">°C</td><td class="desc">Maximum allowable internal temperature (from equipment spec)</td></tr>
+        <tr><td class="sym">Q_dissip</td><td class="unit">W</td><td class="desc">Heat dissipated through panel walls = h × A_eff × ΔT</td></tr>
+        <tr><td class="sym">Q_vent</td><td class="unit">W</td><td class="desc">Ventilation heat removal required = P_total − Q_dissip (if &gt; 0)</td></tr>
+        <tr><td class="sym">V_air</td><td class="unit">m³/h</td><td class="desc">Required air volume flow for forced ventilation: V = Q_vent / (ρ_air × Cp × ΔT)</td></tr>
+        <tr><td class="sym">ρ_air</td><td class="unit">kg/m³</td><td class="desc">Air density ≈ 1.2 kg/m³ at 20°C, 1 atm</td></tr>
+        <tr><td class="sym">Cp</td><td class="unit">J/(kg·K)</td><td class="desc">Specific heat of air ≈ 1005 J/(kg·K)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Equipment Heat Load &amp; Enclosure Data</div>
+      <div class="input-group">
+        <div class="input-label"><span>Panel Width</span><span class="sym-inline">W</span></div>
+        <div class="input-wrap"><input type="number" id="ht-W" value="0.8" step="0.05"><div class="unit-tag">m</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Panel Height</span><span class="sym-inline">H</span></div>
+        <div class="input-wrap"><input type="number" id="ht-H" value="2.0" step="0.05"><div class="unit-tag">m</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Panel Depth</span><span class="sym-inline">D</span></div>
+        <div class="input-wrap"><input type="number" id="ht-D" value="0.4" step="0.05"><div class="unit-tag">m</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>% Surface Exposed (not wall/floor)</span><span class="sym-inline">k</span></div>
+        <div class="input-wrap"><input type="number" id="ht-k" value="100" step="5"><div class="unit-tag">%</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>PLCs / Controllers</span><span class="sym-inline">P1</span></div>
+        <div class="input-wrap"><input type="number" id="ht-P1" value="30" step="1"><div class="unit-tag">W</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>I/O Cards (total)</span><span class="sym-inline">P2</span></div>
+        <div class="input-wrap"><input type="number" id="ht-P2" value="40" step="1"><div class="unit-tag">W</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Power Supplies</span><span class="sym-inline">P3</span></div>
+        <div class="input-wrap"><input type="number" id="ht-P3" value="25" step="1"><div class="unit-tag">W</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Relays &amp; Terminals</span><span class="sym-inline">P4</span></div>
+        <div class="input-wrap"><input type="number" id="ht-P4" value="20" step="1"><div class="unit-tag">W</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Miscellaneous Equipment</span><span class="sym-inline">P5</span></div>
+        <div class="input-wrap"><input type="number" id="ht-P5" value="10" step="1"><div class="unit-tag">W</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Ambient Temperature</span><span class="sym-inline">T_amb</span></div>
+        <div class="input-wrap"><input type="number" id="ht-Tamb" value="35" step="1"><div class="unit-tag">°C</div></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label"><span>Max Allowable Internal Temp</span><span class="sym-inline">T_max</span></div>
+        <div class="input-wrap"><input type="number" id="ht-Tmax" value="55" step="1"><div class="unit-tag">°C</div></div>
+      </div>
+      <button class="calc-btn" onclick="calcHeat()">CALCULATE THERMAL REQUIREMENTS</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Governing Formulas</div>
+      <div class="formula-block">
+        <span class="formula-comment">// Step 1 — Total heat loss in enclosure:</span><br>
+        P_total = ΣP_i  (W)<br><br>
+        <span class="formula-comment">// Step 2 — Effective surface area:</span><br>
+        A_eff = (2×H×W + 2×H×D + W×D) × k/100<br>
+        <span class="formula-comment">// Note: bottom face excluded, 1 side may touch wall</span><br><br>
+        <span class="formula-comment">// Step 3 — Natural convection dissipation:</span><br>
+        h_nat = 5.5 W/(m²·K)  [standard steel enclosure]<br>
+        Q_nat = h_nat × A_eff × ΔT_max<br>
+        ΔT_max = T_max − T_amb<br><br>
+        <span class="formula-comment">// Step 4 — Ventilation requirement:</span><br>
+        if P_total &lt;= Q_nat → natural ventilation sufficient<br>
+        Q_vent = P_total − Q_nat<br><br>
+        <span class="formula-comment">// Step 5 — Required air flow (forced vent):</span><br>
+        V_air = Q_vent × 3600 / (ρ_air × Cp × ΔT_fan)<br>
+        <span class="formula-comment">// ΔT_fan typically 10–15°C across fan</span>
+      </div>
+
+      <div id="heat-result" class="result-block">
+        <div class="result-row"><span class="result-label">Total Heat Load P_total</span><span><span class="result-value" id="ht-res-P">—</span><span class="result-unit">W</span></span></div>
+        <div class="result-row"><span class="result-label">Effective Surface A_eff</span><span><span class="result-value" id="ht-res-A">—</span><span class="result-unit">m²</span></span></div>
+        <div class="result-row"><span class="result-label">Allowed ΔT</span><span><span class="result-value" id="ht-res-dT">—</span><span class="result-unit">°C</span></span></div>
+        <div class="result-row"><span class="result-label">Natural Dissipation Q_nat</span><span><span class="result-value" id="ht-res-Qnat">—</span><span class="result-unit">W</span></span></div>
+        <div class="result-row"><span class="result-label">Ventilation Required Q_vent</span><span><span class="result-value" id="ht-res-Qvent">—</span><span class="result-unit">W</span></span></div>
+        <div class="result-row"><span class="result-label">Required Air Flow</span><span><span class="result-value" id="ht-res-Vair">—</span><span class="result-unit">m³/h</span></span></div>
+        <div class="result-row"><span class="result-label">Cooling Method</span><span><span class="result-value" id="ht-res-method">—</span></span></div>
+        <div id="heat-validation"></div>
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="excel-block">
+        <span class="excel-label">A_eff:</span>=(2*H*W+2*H*D+W*D)*k/100<br>
+        <span class="excel-label">Q_nat:</span>=5.5*A_eff*(T_max-T_amb)<br>
+        <span class="excel-label">Q_vent:</span>=MAX(0, P_total-Q_nat)<br>
+        <span class="excel-label">V_air:</span>=Q_vent*3600/(1.2*1005*dT_fan)
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="footer-note">
+  INSTRUMENTATION &amp; CONTROL ENGINEERING CALCULATOR SUITE — TIER 1 — EPC/FEED DESIGN USE ONLY<br>
+  All calculations must be verified by a Chartered/Registered Engineer prior to use in engineering documentation.
+  Standards: ISA S75 | IEC 60534 | API 520/521 | ISO 5167 | IEC 60364 | IEEE 835 | IEC 61511 | ASME PTC 19.3 TW
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// TAB MANAGEMENT
+// ═══════════════════════════════════════════
+function showTab(id) {
+  document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+const g = 9.81;
+const fmt = (v, d=3) => isNaN(v)||!isFinite(v) ? '—' : Number(v).toPrecision(d);
+const fmt2 = (v, d=4) => isNaN(v)||!isFinite(v) ? '—' : v.toFixed(d);
+const fmt4 = (v) => isNaN(v)||!isFinite(v) ? '—' : v.toExponential(3);
+
+function showResult(id) {
+  document.getElementById(id).classList.add('visible');
+}
+
+function setValidation(id, type, msg) {
+  const el = document.getElementById(id);
+  const icons = { ok: '✔', warn: '⚠', err: '✘' };
+  el.innerHTML = `<div class="validation-box val-${type}"><span class="val-icon">${icons[type]}</span>${msg}</div>`;
+}
+
+// API 526 Standard Orifice Sizes (mm²)
+const API_ORIFICES = [
+  {name:'D', area:71}, {name:'E', area:126}, {name:'F', area:198},
+  {name:'G', area:324}, {name:'H', area:506}, {name:'J', area:830},
+  {name:'K', area:1186}, {name:'L', area:1840}, {name:'M', area:2323},
+  {name:'N', area:2800}, {name:'P', area:4116}, {name:'Q', area:7100},
+  {name:'R', area:11610}, {name:'T', area:17100}
+];
+
+function nextApiOrifice(area) {
+  const found = API_ORIFICES.find(o => o.area >= area);
+  return found ? `Letter ${found.name} (${found.area} mm²)` : `>T (${area.toFixed(0)} mm² custom)`;
+}
+
+// Standard cable sizes (mm²)
+const STD_CABLE = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300, 400];
+function nextCableSize(s) { return STD_CABLE.find(c => c >= s) || 400; }
+
+// IEC 60364 base current ratings (Cu, XLPE, in air, 3-phase) approx
+const IEC_CABLE = {
+  xlpe_cu:  {1.5:18, 2.5:24, 4:32, 6:41, 10:57, 16:76, 25:101, 35:125, 50:151, 70:192, 95:232, 120:269, 150:300, 185:341, 240:400, 300:458},
+  pvc_cu:   {1.5:15, 2.5:20, 4:27, 6:34, 10:46, 16:62, 25:82,  35:100, 50:120, 70:151, 95:182, 120:210, 150:240, 185:273, 240:320, 300:367},
+  xlpe_al:  {1.5:14, 2.5:18, 4:24, 6:31, 10:44, 16:58, 25:78,  35:96,  50:117, 70:149, 95:180, 120:208, 150:236, 185:268, 240:315, 300:360},
+  pvc_al:   {1.5:12, 2.5:15, 4:21, 6:27, 10:36, 16:48, 25:63,  35:77,  50:93,  70:118, 95:142, 120:164, 150:189, 185:215, 240:252, 300:289}
+};
+
+// ═══════════════════════════════════════════
+// CALC 1: CONTROL VALVE
+// ═══════════════════════════════════════════
+let cvMode = 'liquid';
+function setCvMode(m) {
+  cvMode = m;
+  document.getElementById('cv-liquid-inputs').style.display = m==='liquid' ? 'block' : 'none';
+  document.getElementById('cv-gas-inputs').style.display = m==='gas' ? 'block' : 'none';
+  document.getElementById('cv-formula-liquid').style.display = m==='liquid' ? 'block' : 'none';
+  document.getElementById('cv-formula-gas').style.display = m==='gas' ? 'block' : 'none';
+  document.getElementById('cv-excel-liquid').style.display = m==='liquid' ? 'block' : 'none';
+  document.getElementById('cv-excel-gas').style.display = m==='gas' ? 'block' : 'none';
+  document.getElementById('cv-liq-btn').classList.toggle('active', m==='liquid');
+  document.getElementById('cv-gas-btn').classList.toggle('active', m==='gas');
+  document.getElementById('cv-row-Kc').style.display = m==='liquid' ? 'flex' : 'none';
+  document.getElementById('cv-row-Y').style.display = m==='gas' ? 'flex' : 'none';
+  document.getElementById('cv-row-x').style.display = m==='gas' ? 'flex' : 'none';
+}
+
+function calcCV() {
+  const R = document.getElementById('cv-result');
+  if (cvMode === 'liquid') {
+    const Q    = +document.getElementById('cv-Q').value;
+    const P1   = +document.getElementById('cv-P1').value;
+    const P2   = +document.getElementById('cv-P2').value;
+    const rho  = +document.getElementById('cv-rho').value;
+    const Pv   = +document.getElementById('cv-Pv').value;
+    const Pc   = +document.getElementById('cv-Pc').value;
+    const FL   = +document.getElementById('cv-FL').value;
+    const FP   = +document.getElementById('cv-FP').value;
+
+    const dP_actual = P1 - P2;
+    const Ff = 0.96 - 0.28 * Math.sqrt(Pv / Pc);
+    const dP_max = Math.pow(FL * FP, 2) * (P1 - Ff * Pv);
+    const dP_eff = Math.min(dP_actual, dP_max);
+    const isChoked = dP_actual > dP_max;
+
+    // ISA S75 / IEC 60534 SI formula:
+    // Cv = Q/(N1*FP) * sqrt(rho/rhoW / dP)
+    // N1 = 0.0865 (m³/h, bar, kg/m³)
+    const N1 = 0.0865;
+    const rhoW = 999.0;
+    const Cv = (Q / (N1 * FP)) * Math.sqrt((rho / rhoW) / dP_eff);
+
+    const Kc = dP_actual / (P1 - Pv);
+    const cavitates = Kc > FL * FL;
+
+    document.getElementById('cv-res-cv').textContent  = fmt(Cv, 4);
+    document.getElementById('cv-res-dp').textContent  = fmt(dP_eff, 3);
+    document.getElementById('cv-res-dpm').textContent = fmt(dP_max, 3);
+    document.getElementById('cv-res-Ff').textContent  = fmt(Ff, 3);
+    document.getElementById('cv-res-Kc').textContent  = fmt(Kc, 3);
+    showResult('cv-result');
+
+    const msgs = [];
+    if (isChoked) msgs.push('CHOKED FLOW: dP_actual > dP_choked — use dP_choked for sizing');
+    if (cavitates) msgs.push(`CAVITATION WARNING: Kc=${fmt(Kc,3)} > FL²=${fmt(FL*FL,3)} — select anti-cavitation trim`);
+    if (Cv < 0.01) msgs.push('Cv very small — verify process data');
+    if (msgs.length === 0) setValidation('cv-validation','ok','No choke or cavitation — standard liquid trim acceptable');
+    else msgs.forEach(m => setValidation('cv-validation', m.includes('CAVITAT')||m.includes('CHOKE') ? 'warn' : 'err', m));
+  } else {
+    // GAS
+    const W     = +document.getElementById('cv-W').value;
+    const P1    = +document.getElementById('cv-P1g').value;
+    const P2    = +document.getElementById('cv-P2g').value;
+    const T     = +document.getElementById('cv-T').value;
+    const MW    = +document.getElementById('cv-MW').value;
+    const Z     = +document.getElementById('cv-Z').value;
+    const gamma = +document.getElementById('cv-gamma').value;
+    const xT    = +document.getElementById('cv-xT').value;
+
+    const x = (P1 - P2) / P1;
+    const xT_eff = (gamma / 1.4) * xT;
+    const isChoked = x >= xT_eff;
+    const x_used = Math.min(x, xT_eff);
+    const Y = 1 - x_used / (3 * (gamma / 1.4) * xT);
+
+    // N9 = 94.8 (kg/h, bara, K, g/mol)
+    const N9 = 94.8;
+    const Cv = (W / (N9 * P1 * Y)) * Math.sqrt((T * Z) / (x_used * MW));
+
+    document.getElementById('cv-res-cv').textContent  = fmt(Cv, 4);
+    document.getElementById('cv-res-dp').textContent  = fmt((P1-P2), 3);
+    document.getElementById('cv-res-dpm').textContent = fmt(xT_eff * P1, 3);
+    document.getElementById('cv-res-Ff').textContent  = fmt(Y, 3);
+    document.getElementById('cv-res-Y').textContent   = fmt(Y, 3);
+    document.getElementById('cv-res-x').textContent   = fmt(x_used, 3);
+    showResult('cv-result');
+
+    if (isChoked) setValidation('cv-validation','warn',`CHOKED FLOW: x=${fmt(x,3)} ≥ xT_eff=${fmt(xT_eff,3)} — sonic flow, use x_choked in Cv formula`);
+    else setValidation('cv-validation','ok',`Sub-critical gas flow. Pressure ratio x=${fmt(x,3)}, expansion Y=${fmt(Y,3)}`);
+  }
+}
+
+// ═══════════════════════════════════════════
+// CALC 2: PSV
+// ═══════════════════════════════════════════
+let psvMode = 'gas';
+function setPsvMode(m) {
+  psvMode = m;
+  document.getElementById('psv-gas-inputs').style.display = m==='gas' ? 'block' : 'none';
+  document.getElementById('psv-liquid-inputs').style.display = m==='liquid' ? 'block' : 'none';
+  document.getElementById('psv-formula-gas').style.display = m==='gas' ? 'block' : 'none';
+  document.getElementById('psv-formula-liquid').style.display = m==='liquid' ? 'block' : 'none';
+  document.getElementById('psv-gas-btn').classList.toggle('active', m==='gas');
+  document.getElementById('psv-liq-btn').classList.toggle('active', m==='liquid');
+}
+
+function calcPSV() {
+  if (psvMode === 'gas') {
+    const W     = +document.getElementById('psv-W').value;
+    const Pset  = +document.getElementById('psv-Pset').value;
+    const Pback = +document.getElementById('psv-Pback').value;
+    const T     = +document.getElementById('psv-T').value;
+    const MW    = +document.getElementById('psv-MW').value;
+    const Z     = +document.getElementById('psv-Z').value;
+    const gamma = +document.getElementById('psv-gamma').value;
+    const Kd    = +document.getElementById('psv-Kd').value;
+    const Kb    = +document.getElementById('psv-Kb').value;
+    const Kc    = +document.getElementById('psv-Kc').value;
+
+    const P1 = Pset * 1.10 + 1.01325; // bara
+    const Pback_abs = Pback + 1.01325;
+    // Critical flow check
+    const Pcrit = P1 * Math.pow(2/(gamma+1), gamma/(gamma-1));
+    const regime = Pback_abs < Pcrit ? 'CRITICAL (Sonic)' : 'SUBCRITICAL';
+
+    // Gas constant C
+    const C = 520 * Math.sqrt(gamma * Math.pow(2/(gamma+1), (gamma+1)/(gamma-1)));
+
+    // API 520 formula — critical gas, SI: A in mm²
+    // Derived by converting API 520 USC formula to metric:
+    //   USC: A[in²] = W[lb/h] / (C × Kd × P1[psia] × Kb × Kc) × √(T[°R]×Z/M)
+    //   Metric conversions: W×2.2046, P÷14.504, T×1.8(√), A×645.16
+    //   factor = 2.2046 × √1.8 × 645.16 / 14.504 = 131.57
+    // A(mm²) = W[kg/h]/(C × Kd × P1[bara] × Kb × Kc) × √(T[K]×Z/MW) × 131.57
+    const A = (W / (C * Kd * P1 * Kb * Kc)) * Math.sqrt((T * Z) / MW) * 131.57;
+    const D = Math.sqrt(4 * A / Math.PI);
+
+    document.getElementById('psv-res-P1').textContent     = fmt(P1,4);
+    document.getElementById('psv-res-C').textContent      = fmt(C,4);
+    document.getElementById('psv-res-regime').textContent = regime;
+    document.getElementById('psv-res-A').textContent      = fmt(A,4);
+    document.getElementById('psv-res-D').textContent      = fmt(D,3);
+    document.getElementById('psv-res-std').textContent    = nextApiOrifice(A);
+    showResult('psv-result');
+
+    if (regime !== 'CRITICAL (Sonic)') setValidation('psv-validation','warn','Subcritical flow: use subcritical gas formula (requires additional Cf factor). Consult API 520 Eq. 11.');
+    else setValidation('psv-validation','ok',`Critical sonic flow confirmed. P1=${fmt(P1,3)} bara, Pcrit=${fmt(Pcrit,3)} bara. Use API orifice ≥ ${nextApiOrifice(A)}`);
+  } else {
+    // LIQUID
+    const Qlpm  = +document.getElementById('psv-Qliq').value;
+    const Pset  = +document.getElementById('psv-PsetL').value;
+    const Pback = +document.getElementById('psv-PbackL').value;
+    const SG    = +document.getElementById('psv-SG').value;
+    const Kd    = +document.getElementById('psv-KdL').value;
+    const Kw    = +document.getElementById('psv-Kw').value;
+    const Kv    = +document.getElementById('psv-Kv').value;
+    const Kc    = +document.getElementById('psv-KcL').value;
+
+    const P1 = Pset * 1.10 + 1.01325;
+    const P2 = Pback + 1.01325;
+    const dP = P1 - P2;
+    const Q_m3h = Qlpm * 60 / 1000;
+
+    // API 520 liquid: A[mm²] = Q[L/min]/(Kd*Kw*Kc*Kv) * sqrt(SG/dP[bar]) * 11.78
+    const A = (Qlpm / (Kd * Kw * Kc * Kv)) * Math.sqrt(SG / dP) * 11.78;
+    const D = Math.sqrt(4 * A / Math.PI);
+
+    document.getElementById('psv-res-P1').textContent     = fmt(P1,4);
+    document.getElementById('psv-res-C').textContent      = 'N/A (liquid)';
+    document.getElementById('psv-res-regime').textContent = 'Liquid Service';
+    document.getElementById('psv-res-A').textContent      = fmt(A,4);
+    document.getElementById('psv-res-D').textContent      = fmt(D,3);
+    document.getElementById('psv-res-std').textContent    = nextApiOrifice(A);
+    showResult('psv-result');
+    setValidation('psv-validation','ok',`Liquid PSV. ΔP = ${fmt(dP,3)} bar. Required area = ${fmt(A,4)} mm². Select next API orifice: ${nextApiOrifice(A)}`);
+  }
+}
+
+// ═══════════════════════════════════════════
+// CALC 3: ORIFICE
+// ═══════════════════════════════════════════
+let orMode = 'measure';
+function setOrMode(m) {
+  orMode = m;
+  document.getElementById('or-grp-d').style.display      = m==='measure' ? 'flex' : 'none';
+  document.getElementById('or-grp-Qreq').style.display   = m==='size'    ? 'flex' : 'none';
+  document.getElementById('or-meas-btn').classList.toggle('active', m==='measure');
+  document.getElementById('or-size-btn').classList.toggle('active', m==='size');
+}
+// fix flex display
+document.querySelectorAll('.input-group').forEach(g=>g.style.display='block');
+
+function calcRH_Gallagher(beta, Re, tap) {
+  // Reader-Harris/Gallagher equation (ISO 5167-2:2003)
+  // tap: 'flange', 'd1d2', 'corner'
+  const b = beta;
+  const b2=b*b, b4=b2*b2, b8=b4*b4;
+  const A = Math.pow(19000*b/Re, 0.8);
+  
+  let L1, L2prime;
+  if (tap === 'flange') { L1 = 25.4/0; /* placeholder */ L1 = 0.0254/1; L2prime=0.0254/1; } // flange
+  // For simplicity use D&D/2 (most common process):
+  // L1 = 1.0 (D tap), L2' = 0.47
+  if (tap === 'd1d2')   { L1 = 1.0; L2prime = 0.47; }
+  else if (tap === 'corner') { L1 = 0; L2prime = 0; }
+  else { L1 = 0.0254; L2prime = 0.0254; } // flange taps in D units (approx for 1" flanges)
+
+  const M2 = 2 * L2prime / (1 - b);
+  const Cd = 0.5961
+    + 0.0261*b2 - 0.216*b8
+    + 0.000521*Math.pow(1e6*b/Re, 0.7)
+    + (0.0188 + 0.0063*A) * Math.pow(b,3.5) * Math.pow(1e6/Re, 0.3)
+    + (0.043 + 0.080*Math.exp(-10*L1) - 0.123*Math.exp(-7*L1)) * (1-0.11*A) * b4/(1-b4)
+    - 0.031*(M2 - 0.8*Math.pow(M2,1.1))*Math.pow(b,1.3);
+  return Math.max(0.5, Math.min(0.75, Cd));
+}
+
+function calcOrifice() {
+  const D_mm  = +document.getElementById('or-D').value;
+  const dP    = +document.getElementById('or-dP').value; // Pa
+  const rho   = +document.getElementById('or-rho').value;
+  const mu    = +document.getElementById('or-mu').value;
+  const eps   = +document.getElementById('or-eps').value;
+  const tap   = document.getElementById('or-tap').value;
+  const D = D_mm / 1000;
+
+  let d_mm, beta;
+  if (orMode === 'measure') {
+    d_mm = +document.getElementById('or-d').value;
+    beta = d_mm / D_mm;
+  } else {
+    // Iterative sizing from required flow
+    const Qreq = +document.getElementById('or-Qreq').value / 3600; // m³/s
+    beta = 0.6; // initial guess
+    for (let iter = 0; iter < 50; iter++) {
+      d_mm = beta * D_mm;
+      const d = d_mm/1000;
+      const Ab = Math.PI/4*d*d;
+      const Re = 4 * rho * Qreq / (Math.PI * d * mu);
+      const Cd_iter = calcRH_Gallagher(beta, Re, tap);
+      const qm_calc = Cd_iter / Math.sqrt(1-Math.pow(beta,4)) * eps * Ab * Math.sqrt(2*rho*dP);
+      const qv_calc = qm_calc / rho;
+      const beta_new = beta * Math.pow(Qreq / qv_calc, 0.25);
+      if (Math.abs(beta_new - beta) < 1e-6) break;
+      beta = beta_new;
+    }
+    d_mm = beta * D_mm;
+  }
+
+  const d = d_mm / 1000;
+  const A_bore = Math.PI/4 * d*d;
+  const A_pipe = Math.PI/4 * D*D;
+
+  // Iterative Cd (Re depends on qm which depends on Cd)
+  let Cd = 0.61;
+  let qm = 0;
+  for (let i = 0; i < 30; i++) {
+    const qm_prev = qm;
+    qm = Cd / Math.sqrt(1 - Math.pow(beta,4)) * eps * A_bore * Math.sqrt(2 * rho * dP);
+    const Re_D = 4 * qm / (Math.PI * D * mu);
+    Cd = calcRH_Gallagher(beta, Math.max(Re_D, 5000), tap);
+    if (Math.abs(qm - qm_prev) < 1e-8) break;
+  }
+
+  const Re_D = 4 * qm / (Math.PI * D * mu);
+  const qv = qm / rho * 3600;
+  const V = qm / (rho * A_pipe);
+
+  document.getElementById('or-res-beta').textContent = fmt(beta, 4);
+  document.getElementById('or-res-Cd').textContent   = fmt(Cd, 4);
+  document.getElementById('or-res-Re').textContent   = Re_D.toExponential(3);
+  document.getElementById('or-res-qm').textContent   = fmt(qm, 4);
+  document.getElementById('or-res-qv').textContent   = fmt(qv, 4);
+  document.getElementById('or-res-V').textContent    = fmt(V, 3);
+  showResult('orifice-result');
+
+  const errs = [];
+  if (beta < 0.20 || beta > 0.75) errs.push(`β=${fmt(beta,3)} out of ISO 5167 range [0.20–0.75]`);
+  if (Re_D < 5000) errs.push(`Re=${Re_D.toFixed(0)} below minimum for tap type`);
+  if (errs.length) errs.forEach(e => setValidation('or-validation','warn',e));
+  else setValidation('or-validation','ok',`β=${fmt(beta,3)}, Cd=${fmt(Cd,4)}, Re=${Re_D.toExponential(2)} — all within ISO 5167-2 validity range`);
+}
+
+// ═══════════════════════════════════════════
+// CALC 4: DP LEVEL
+// ═══════════════════════════════════════════
+let dpMode = 'dry';
+function setDpMode(m) {
+  dpMode = m;
+  document.getElementById('dp-wet-inputs').style.display       = m==='wet' ? 'block' : 'none';
+  document.getElementById('dp-interface-inputs').style.display = m==='interface' ? 'block' : 'none';
+  ['dp-dry-btn','dp-wet-btn','dp-int-btn'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('dp-'+{dry:'dry',wet:'wet',interface:'int'}[m]+'-btn').classList.add('active');
+}
+
+function calcDP() {
+  const H    = +document.getElementById('dp-H').value;
+  const rho  = +document.getElementById('dp-rho').value;
+  const hLT  = +document.getElementById('dp-hLT').value;
+  const Pa_per_mbar = 100;
+
+  let LRV, URV, elevCorr = 0;
+  elevCorr = rho * g * hLT / Pa_per_mbar; // mbar
+
+  if (dpMode === 'dry') {
+    LRV = -elevCorr;
+    URV = rho * g * H / Pa_per_mbar - elevCorr;
+  } else if (dpMode === 'wet') {
+    const rhoWL = +document.getElementById('dp-rhoWL').value;
+    const Hwl   = +document.getElementById('dp-Hwl').value;
+    const wetLeg_static = rhoWL * g * Hwl / Pa_per_mbar;
+    LRV = -wetLeg_static - elevCorr;
+    URV = rho * g * H / Pa_per_mbar - wetLeg_static - elevCorr;
+  } else {
+    // Interface
+    const rhoU  = +document.getElementById('dp-rhoU').value;
+    const rhoL  = +document.getElementById('dp-rhoL').value;
+    const Htot  = +document.getElementById('dp-Htotal').value;
+    // At 0% interface (all upper fluid): DP = rhoU*g*Htot
+    // At 100% interface (all lower fluid): DP = rhoL*g*Htot
+    LRV = rhoU * g * H / Pa_per_mbar; // 0% interface (upper fluid throughout span)
+    URV = rhoL * g * H / Pa_per_mbar; // 100% interface (lower fluid throughout span)
+  }
+
+  const span = URV - LRV;
+  document.getElementById('dp-res-LRV').textContent  = fmt(LRV, 4);
+  document.getElementById('dp-res-URV').textContent  = fmt(URV, 4);
+  document.getElementById('dp-res-span').textContent = fmt(Math.abs(span), 4);
+  document.getElementById('dp-res-elev').textContent = fmt(elevCorr, 3);
+  showResult('dp-result');
+
+  if (LRV < 0) setValidation('dp-validation','warn',`LRV=${fmt(LRV,3)} mbar — negative. Transmitter requires SUPPRESS mode (zero suppression). Verify transmitter span rating.`);
+  else setValidation('dp-validation','ok',`Calibration: LRV=${fmt(LRV,3)} mbar, URV=${fmt(URV,3)} mbar, Span=${fmt(Math.abs(span),3)} mbar`);
+}
+
+// ═══════════════════════════════════════════
+// CALC 5: CABLE SIZING
+// ═══════════════════════════════════════════
+function calcCable() {
+  const I     = +document.getElementById('cb-I').value;
+  const V     = +document.getElementById('cb-V').value;
+  const L     = +document.getElementById('cb-L').value;
+  const PF    = +document.getElementById('cb-PF').value;
+  const VDpct = +document.getElementById('cb-VDpct').value;
+  const Tamb  = +document.getElementById('cb-Tamb').value;
+  const n     = +document.getElementById('cb-n').value;
+  const insul = document.getElementById('cb-insul').value;
+  const cond  = document.getElementById('cb-cond').value;
+  const Isc   = +document.getElementById('cb-Isc').value;
+  const t     = +document.getElementById('cb-t').value;
+
+  // Temperature derating (IEC 60364-5-52 Table B.52.14)
+  const Tmax = insul === 'xlpe' ? 90 : 70;
+  const Tref = 30; // reference ambient
+  const Ca = Math.sqrt((Tmax - Tamb) / (Tmax - Tref));
+
+  // Grouping factor (IEC Table B.52.20 — touching cables in tray)
+  const Cg_table = [1,0.80,0.70,0.65,0.60,0.57,0.54,0.52,0.50,0.48,0.45,0.43,0.41,0.39,0.38,0.36,0.35,0.34,0.33,0.32];
+  const Cg = Cg_table[Math.min(n-1, 19)];
+
+  const I_t = I / (Ca * Cg); // minimum required Iz
+
+  // Find minimum std size from current tables
+  const key = `${insul}_${cond}`;
+  const tbl = IEC_CABLE[key];
+  let S_cc = STD_CABLE[STD_CABLE.length-1];
+  for (const sz of STD_CABLE) {
+    const Iz = (tbl[sz] || 0) * Ca * Cg;
+    if (Iz >= I) { S_cc = sz; break; }
+  }
+
+  // Voltage drop: S_vd = sqrt(3)*I*L*PF / (dV*sigma) [three-phase]
+  const dV_max = V * VDpct / 100;
+  const sigma_cu = 56; // m/(Ω·mm²) at 70°C approximation
+  const sigma_al = 34;
+  const sigma = cond === 'cu' ? sigma_cu : sigma_al;
+  const S_vd = (Math.sqrt(3) * I * L * PF) / (dV_max * sigma);
+
+  // Short circuit
+  const k_factor = (insul==='xlpe' && cond==='cu') ? 143 : (insul==='pvc' && cond==='cu') ? 115 : 76;
+  const S_sc = (Isc * Math.sqrt(t)) / k_factor;
+
+  const S_all = [S_cc, S_vd, S_sc];
+  const S_governing = Math.max(...S_all);
+  const S_final = nextCableSize(S_governing);
+
+  // Actual VD for final size
+  const R_ohm_per_km = (1000 / (sigma * S_final)); // Ω/km
+  const VD_actual = Math.sqrt(3) * I * L * R_ohm_per_km / 1000;
+  const VD_pct = VD_actual / V * 100;
+
+  document.getElementById('cb-res-Ca').textContent    = fmt(Ca, 3);
+  document.getElementById('cb-res-Cg').textContent    = fmt(Cg, 3);
+  document.getElementById('cb-res-Scc').textContent   = fmt(S_cc, 3);
+  document.getElementById('cb-res-Svd').textContent   = fmt(S_vd, 3);
+  document.getElementById('cb-res-Ssc').textContent   = fmt(S_sc, 3);
+  document.getElementById('cb-res-final').textContent = S_final;
+  document.getElementById('cb-res-VD').textContent    = fmt(VD_pct,3) + '% / ' + fmt(VD_actual,3);
+  showResult('cable-result');
+
+  const gov = S_sc >= S_vd && S_sc >= S_cc ? 'SHORT-CIRCUIT' : S_vd >= S_cc ? 'VOLTAGE DROP' : 'CURRENT CAPACITY';
+  let status = 'ok';
+  let msg = `Governing criterion: ${gov}. Selected: ${S_final} mm² — VD=${fmt(VD_pct,3)}%`;
+  if (VD_pct > VDpct + 0.5) { status = 'warn'; msg += ' — actual VD slightly exceeds limit; verify with X component'; }
+  if (Ca < 0.7) { status = 'warn'; msg += ` | Ca=${fmt(Ca,3)} — high ambient temp significantly reduces capacity`; }
+  setValidation('cable-validation', status, msg);
+}
+
+// ═══════════════════════════════════════════
+// CALC 6: SIL / PFDavg
+// ═══════════════════════════════════════════
+function calcSIL() {
+  const lD   = +document.getElementById('sil-lD').value;
+  const DC   = +document.getElementById('sil-DC').value;
+  const TI   = +document.getElementById('sil-TI').value;
+  const MRT  = +document.getElementById('sil-MRT').value;
+  const beta = +document.getElementById('sil-beta').value;
+  const arch = document.getElementById('sil-arch').value;
+  const nsub = +document.getElementById('sil-nsub').value;
+  const targetSIL = +document.getElementById('sil-target').value;
+
+  const lDU = lD * (1 - DC);
+  const lDD = lD * DC;
+  const MTTF = 1 / (lDU * 8760); // years
+
+  let PFD1;
+  if (arch === '1oo1') {
+    PFD1 = lDU * TI/2 + lDD * MRT/2;
+  } else if (arch === '1oo2') {
+    const ind = Math.pow(1-beta, 2) * (2/3) * Math.pow(lDU * TI/2, 2);
+    const det = Math.pow(1-beta, 2) * lDU * lDD * MRT * TI/2;
+    const ccf = beta * lDU * TI/2;
+    PFD1 = ind + det + ccf;
+  } else if (arch === '2oo2') {
+    // Series: higher PFD
+    PFD1 = 2 * lDU * TI/2;
+  } else { // 2oo3
+    const ind = Math.pow(1-beta, 2) * 3 * Math.pow(lDU * TI/2, 2);
+    const ccf = beta * lDU * TI/2;
+    PFD1 = ind + ccf;
+  }
+
+  // Full SIF = series of nsub identical subsystems
+  const PFD_SIF = PFD1 * nsub;
+  const RRF = 1 / PFD_SIF;
+
+  // Determine achieved SIL
+  let achSIL;
+  if (PFD_SIF >= 0.1) achSIL = 'SIL 0 — BELOW SIL 1';
+  else if (PFD_SIF >= 0.01) achSIL = 'SIL 1';
+  else if (PFD_SIF >= 0.001) achSIL = 'SIL 2';
+  else if (PFD_SIF >= 0.0001) achSIL = 'SIL 3';
+  else achSIL = 'SIL 4';
+
+  document.getElementById('sil-res-lDU').textContent  = lDU.toExponential(3);
+  document.getElementById('sil-res-lDD').textContent  = lDD.toExponential(3);
+  document.getElementById('sil-res-PFD1').textContent = PFD1.toExponential(3);
+  document.getElementById('sil-res-PFD').textContent  = PFD_SIF.toExponential(3);
+  document.getElementById('sil-res-RRF').textContent  = RRF.toFixed(0);
+  document.getElementById('sil-res-MTTF').textContent = fmt(MTTF, 3);
+  document.getElementById('sil-res-SIL').textContent  = achSIL;
+  showResult('sil-result');
+
+  const achieved = parseInt(achSIL.replace(/\D/g,'')) || 0;
+  if (achieved >= targetSIL) setValidation('sil-validation','ok',`TARGET MET: ${achSIL} achieved. PFDavg=${PFD_SIF.toExponential(2)}, RRF=${RRF.toFixed(0)}`);
+  else setValidation('sil-validation','err',`TARGET NOT MET: ${achSIL} achieved but SIL ${targetSIL} required. Reduce TI, increase DC, or add redundancy.`);
+}
+
+// ═══════════════════════════════════════════
+// CALC 7: THERMOWELL
+// ═══════════════════════════════════════════
+function calcThermowell() {
+  const V     = +document.getElementById('tw-V').value;
+  const dtip  = +document.getElementById('tw-dtip').value / 1000; // m
+  const droot = +document.getElementById('tw-droot').value / 1000;
+  const dbore = +document.getElementById('tw-dbore').value / 1000;
+  const L     = +document.getElementById('tw-L').value / 1000; // m
+  const E     = +document.getElementById('tw-E').value * 1e9; // Pa
+  const rhom  = +document.getElementById('tw-rhom').value;
+  const rhof  = +document.getElementById('tw-rhof').value;
+  const St    = +document.getElementById('tw-St').value;
+
+  // Shedding frequency
+  const fs = St * V / dtip;
+
+  // Average section properties (use mean of tip and root)
+  const d_avg = (dtip + droot) / 2;
+  const I = Math.PI/64 * (Math.pow(d_avg,4) - Math.pow(dbore,4));
+  const A = Math.PI/4 * (d_avg*d_avg - dbore*dbore);
+
+  // Added mass coefficient (fluid loading)
+  const Ca = 1.0;
+  const m_eff = rhom * A * (1 + Ca * rhof / rhom); // kg/m
+
+  // Cantilever first mode: fn = K²/(2π*L²) * sqrt(EI/m)
+  const K = 1.8751; // first mode
+  const fn = (K*K / (2 * Math.PI * L*L)) * Math.sqrt((E * I) / m_eff);
+
+  const r = fs / fn;
+  const margin = 1 - r;
+  const V_max_transverse = 0.8 * fn * dtip / St;
+  const V_max_inline     = 0.5 * fn * dtip / St;
+
+  document.getElementById('tw-res-fs').textContent     = fmt(fs, 3);
+  document.getElementById('tw-res-fn').textContent     = fmt(fn, 3);
+  document.getElementById('tw-res-r').textContent      = fmt(r, 3);
+  document.getElementById('tw-res-margin').textContent = fmt(margin*100, 3) + '%';
+  document.getElementById('tw-res-Vmax').textContent   = fmt(V_max_transverse, 3);
+  showResult('tw-result');
+
+  if (r > 0.8) setValidation('tw-validation','err',`FAIL: r=${fmt(r,3)} > 0.80 — resonance risk HIGH. Shorten insertion length or increase tip diameter. Redesign required.`);
+  else if (r > 0.5) setValidation('tw-validation','warn',`CAUTION: r=${fmt(r,3)} — within in-line resonance zone (0.5<r<0.8). Increase safety margin. Check transverse and in-line stresses.`);
+  else setValidation('tw-validation','ok',`PASS: r=${fmt(r,3)} < 0.50. fs=${fmt(fs,2)} Hz, fn=${fmt(fn,2)} Hz. Safety margin ${fmt(margin*100,3)}%.`);
+}
+
+// ═══════════════════════════════════════════
+// CALC 8: HEAT DISSIPATION
+// ═══════════════════════════════════════════
+function calcHeat() {
+  const Wp   = +document.getElementById('ht-W').value;
+  const Hp   = +document.getElementById('ht-H').value;
+  const Dp   = +document.getElementById('ht-D').value;
+  const k    = +document.getElementById('ht-k').value / 100;
+  const P1   = +document.getElementById('ht-P1').value;
+  const P2   = +document.getElementById('ht-P2').value;
+  const P3   = +document.getElementById('ht-P3').value;
+  const P4   = +document.getElementById('ht-P4').value;
+  const P5   = +document.getElementById('ht-P5').value;
+  const Tamb = +document.getElementById('ht-Tamb').value;
+  const Tmax = +document.getElementById('ht-Tmax').value;
+
+  const P_total = P1 + P2 + P3 + P4 + P5;
+
+  // Effective surface area (excluding floor and one side wall)
+  // Total = front+back+2sides+top
+  const A_raw = 2*Hp*Wp + 2*Hp*Dp + Wp*Dp; // no floor
+  const A_eff = A_raw * k;
+
+  const dT_max = Tmax - Tamb;
+  const h_nat = 5.5; // W/(m²·K) natural convection, steel panel
+
+  const Q_nat = h_nat * A_eff * dT_max;
+  const Q_vent = Math.max(0, P_total - Q_nat);
+
+  // Required air flow
+  const rho_air = 1.2; // kg/m³
+  const Cp_air = 1005; // J/(kg·K)
+  const dT_fan = 10; // °C temperature rise across fan
+  const V_air = (Q_vent * 3600) / (rho_air * Cp_air * dT_fan);
+
+  const method = Q_vent <= 0 ? 'NATURAL VENTILATION SUFFICIENT' : `FORCED VENTILATION REQUIRED — ${fmt(V_air,3)} m³/h`;
+
+  document.getElementById('ht-res-P').textContent      = fmt(P_total, 4);
+  document.getElementById('ht-res-A').textContent      = fmt(A_eff, 3);
+  document.getElementById('ht-res-dT').textContent     = fmt(dT_max, 3);
+  document.getElementById('ht-res-Qnat').textContent   = fmt(Q_nat, 4);
+  document.getElementById('ht-res-Qvent').textContent  = fmt(Q_vent, 4);
+  document.getElementById('ht-res-Vair').textContent   = Q_vent <= 0 ? '0' : fmt(V_air, 3);
+  document.getElementById('ht-res-method').textContent = method;
+  showResult('heat-result');
+
+  if (Q_vent <= 0) setValidation('heat-validation','ok',`Natural cooling sufficient. P_total=${P_total}W, Q_nat=${fmt(Q_nat,4)}W. ΔT margin = ${fmt((Q_nat-P_total)/(h_nat*A_eff),2)}°C`);
+  else {
+    const fanUnits = Math.ceil(V_air / 200); // 200 m³/h per fan unit estimate
+    setValidation('heat-validation','warn',`Forced ventilation required: ${fmt(V_air,3)} m³/h ≈ ${fanUnits} fan unit(s) @200m³/h. Consider AC unit if dusty environment (IP54+).`);
+  }
+}
+</script>
+</body>
+</html>
